@@ -1,0 +1,1586 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lung Whisperer Advanced</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--c0:#0a0f1e;--c1:#0d1528;--c2:#111d35;--c3:#162245;
+--accent:#00c9a7;--accent2:#3d8ef8;--accent3:#f5a623;--accent4:#e05c6f;
+--text:#e8edf8;--text2:#8fa3c8;--text3:#4a6285;
+--card:rgba(13,21,40,0.8);--border:rgba(61,142,248,0.12);
+--low:#00c9a7;--mod:#f5a623;--high:#e05c6f;--crit:#ff3d71;
+--font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;
+}
+body{background:var(--c0);color:var(--text);font-family:var(--font-body);font-size:14px;min-height:100vh;overflow-x:hidden}
+
+/* NAV */
+.nav{display:flex;gap:0;background:var(--c1);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;position:sticky;top:0;z-index:100}
+.nav::-webkit-scrollbar{display:none}
+.nav-btn{flex-shrink:0;padding:12px 14px;cursor:pointer;font-family:var(--font-body);font-size:11px;font-weight:500;color:var(--text3);background:none;border:none;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;letter-spacing:.02em;text-transform:uppercase}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.nav-btn:hover:not(.active){color:var(--text2);background:rgba(255,255,255,.03)}
+
+/* PAGES */
+.page{display:none;padding:0 0 80px;animation:fadeIn .25s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#0d1a36 0%,#0a1628 60%,#0d0f1e 100%);padding:24px 16px 28px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-60px;right:-40px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(0,201,167,.08) 0%,transparent 70%)}
+.hero::after{content:'';position:absolute;bottom:-40px;left:-20px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(61,142,248,.06) 0%,transparent 70%)}
+.hero-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+.hero-title{font-family:var(--font-head);font-size:26px;font-weight:800;color:var(--text);line-height:1.15;margin-bottom:6px}
+.hero-sub{font-size:13px;color:var(--text2);font-weight:300;line-height:1.5}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(0,201,167,.1);border:1px solid rgba(0,201,167,.25);color:var(--accent);padding:4px 10px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:.05em;margin-top:12px}
+.pulse-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+
+/* METRIC GRID */
+.metric-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:16px}
+.metric-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;backdrop-filter:blur(10px);position:relative;overflow:hidden;cursor:pointer;transition:all .2s}
+.metric-card:hover{border-color:rgba(61,142,248,.3);transform:translateY(-1px)}
+.metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:14px 14px 0 0}
+.metric-card.low::before{background:var(--low)}
+.metric-card.mod::before{background:var(--mod)}
+.metric-card.high::before{background:var(--high)}
+.metric-card.info::before{background:var(--accent2)}
+.metric-icon{font-size:18px;margin-bottom:8px}
+.metric-val{font-family:var(--font-head);font-size:24px;font-weight:700;color:var(--text);line-height:1}
+.metric-val .unit{font-size:13px;font-weight:400;color:var(--text2)}
+.metric-label{font-size:11px;color:var(--text3);margin-top:4px;font-weight:400}
+.metric-trend{font-size:10px;margin-top:6px;display:flex;align-items:center;gap:4px}
+.trend-up{color:var(--high)}.trend-down{color:var(--low)}.trend-stable{color:var(--text3)}
+
+/* SECTION */
+.section{padding:0 16px 16px}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.section-title{font-family:var(--font-head);font-size:14px;font-weight:700;color:var(--text);letter-spacing:.02em}
+.section-link{font-size:11px;color:var(--accent);cursor:pointer;font-weight:500}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;backdrop-filter:blur(10px)}
+.card+.card{margin-top:10px}
+
+/* RISK GAUGE */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;padding:8px 0}
+.gauge-arc{position:relative;width:180px;height:95px;overflow:hidden}
+.gauge-score{font-family:var(--font-head);font-size:36px;font-weight:800;text-align:center;margin-top:-10px}
+.gauge-label{font-size:11px;color:var(--text3);text-align:center;margin-top:2px}
+
+/* BARS */
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.bar-name{font-size:12px;color:var(--text2);width:90px;flex-shrink:0;text-align:right}
+.bar-bg{flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.bar-val{font-size:11px;color:var(--text3);width:30px;text-align:right}
+
+/* RISK BADGE */
+.risk-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;letter-spacing:.03em}
+.risk-low{background:rgba(0,201,167,.1);color:var(--low);border:1px solid rgba(0,201,167,.2)}
+.risk-mod{background:rgba(245,166,35,.1);color:var(--mod);border:1px solid rgba(245,166,35,.2)}
+.risk-high{background:rgba(224,92,111,.1);color:var(--high);border:1px solid rgba(224,92,111,.2)}
+.risk-crit{background:rgba(255,61,113,.15);color:var(--crit);border:1px solid rgba(255,61,113,.3);animation:glow .8s infinite alternate}
+@keyframes glow{from{box-shadow:0 0 6px rgba(255,61,113,.3)}to{box-shadow:0 0 14px rgba(255,61,113,.6)}}
+
+/* BREATH CIRCLE */
+.breath-outer{width:160px;height:160px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;margin:20px auto;position:relative;transition:all 1s ease}
+.breath-ring{position:absolute;width:100%;height:100%;border-radius:50%;border:2px solid transparent;transition:all 1s ease}
+.breath-inner{width:100px;height:100px;border-radius:50%;background:rgba(0,201,167,.08);border:1px solid rgba(0,201,167,.2);display:flex;align-items:center;justify-content:center;flex-direction:column;transition:all 1s ease;cursor:pointer}
+.breath-phase{font-size:12px;font-weight:600;color:var(--accent);text-align:center;line-height:1.2}
+.breath-count{font-family:var(--font-head);font-size:28px;font-weight:800;color:var(--text)}
+.breath-progress{font-size:10px;color:var(--text3);text-align:center;margin-top:2px}
+.ex-btn{padding:8px 20px;border:1px solid var(--border);background:none;color:var(--text2);border-radius:8px;font-family:var(--font-body);font-size:12px;cursor:pointer;transition:all .2s;margin:4px}
+.ex-btn.active{background:rgba(0,201,167,.12);border-color:var(--accent);color:var(--accent)}
+.ex-btn:hover:not(.active){background:rgba(255,255,255,.05);color:var(--text)}
+
+/* CHART WRAPPER */
+.chart-wrap{position:relative;width:100%;height:180px;margin-top:8px}
+
+/* CHAT */
+.chat-messages{height:280px;overflow-y:auto;padding:12px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.chat-messages::-webkit-scrollbar{width:3px}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--border)}
+.msg{margin-bottom:12px;display:flex;gap:8px;animation:fadeIn .2s ease}
+.msg.user{flex-direction:row-reverse}
+.msg-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.bot-av{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0a0f1e}
+.user-av{background:rgba(61,142,248,.2);color:var(--accent2)}
+.msg-bubble{max-width:75%;padding:10px 12px;border-radius:12px;font-size:13px;line-height:1.5}
+.bot-bubble{background:var(--c2);border:1px solid var(--border);color:var(--text);border-radius:4px 12px 12px 12px}
+.user-bubble{background:rgba(61,142,248,.15);border:1px solid rgba(61,142,248,.2);color:var(--text);border-radius:12px 4px 12px 12px}
+.chat-input-row{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border)}
+.chat-input{flex:1;background:var(--c2);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:10px;font-family:var(--font-body);font-size:13px;outline:none;transition:border-color .2s}
+.chat-input:focus{border-color:rgba(61,142,248,.4)}
+.chat-input::placeholder{color:var(--text3)}
+.send-btn{width:38px;height:38px;background:var(--accent);border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.send-btn:hover{background:#00b396;transform:scale(1.05)}
+.chat-chips{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px 0}
+.chip{padding:5px 10px;background:var(--c2);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--text2);cursor:pointer;transition:all .2s}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+
+/* HISTORY TABLE */
+.hist-table{width:100%;border-collapse:collapse;font-size:12px}
+.hist-table th{color:var(--text3);font-weight:500;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.hist-table td{padding:10px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text2);vertical-align:middle}
+.hist-table tr:last-child td{border-bottom:none}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+/* XRAY */
+.upload-zone{border:2px dashed var(--border);border-radius:16px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s}
+.upload-zone:hover{border-color:rgba(0,201,167,.4);background:rgba(0,201,167,.04)}
+.upload-icon{font-size:32px;margin-bottom:8px}
+.upload-title{font-family:var(--font-head);font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px}
+.upload-sub{font-size:12px;color:var(--text3)}
+.finding-row{display:flex;align-items:flex-start;gap:10px;padding:10px;background:rgba(255,255,255,.02);border-radius:10px;margin-bottom:6px}
+.finding-sev{padding:3px 8px;border-radius:6px;font-size:10px;font-weight:600;flex-shrink:0}
+.sev-normal{background:rgba(0,201,167,.1);color:var(--low)}
+.sev-mild{background:rgba(245,166,35,.1);color:var(--mod)}
+.sev-moderate{background:rgba(224,92,111,.1);color:var(--high)}
+.sev-severe{background:rgba(255,61,113,.15);color:var(--crit)}
+
+/* MED REMINDERS */
+.med-card{background:var(--c2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;transition:all .2s}
+.med-card:hover{border-color:rgba(61,142,248,.3)}
+.med-icon{width:40px;height:40px;border-radius:10px;background:rgba(61,142,248,.1);border:1px solid rgba(61,142,248,.2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.med-name{font-weight:500;font-size:13px;color:var(--text)}
+.med-detail{font-size:11px;color:var(--text3);margin-top:2px}
+.med-time{margin-left:auto;text-align:right;flex-shrink:0}
+.med-time-val{font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--accent2)}
+.toggle-switch{position:relative;width:36px;height:20px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--text3);border-radius:20px;transition:.3s}
+.toggle-slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
+input:checked+.toggle-slider{background:var(--accent)}
+input:checked+.toggle-slider::before{transform:translateX(16px)}
+
+/* SMOKING */
+.quit-timer{text-align:center;padding:20px}
+.quit-days{font-family:var(--font-head);font-size:48px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+.quit-label{font-size:12px;color:var(--text3);margin-top:4px}
+.milestone-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;margin-bottom:6px}
+.milestone-done{background:rgba(0,201,167,.06);border:1px solid rgba(0,201,167,.15)}
+.milestone-pending{background:rgba(255,255,255,.02);border:1px solid var(--border);opacity:.6}
+.milestone-icon{font-size:16px}
+.milestone-text{font-size:12px;color:var(--text2);flex:1}
+.milestone-check{font-size:14px}
+
+/* AQI */
+.aqi-big{font-family:var(--font-head);font-size:64px;font-weight:800;line-height:1;text-align:center}
+.aqi-cat{font-size:14px;font-weight:500;text-align:center;margin-top:4px}
+.aqi-bars{display:flex;height:6px;border-radius:3px;overflow:hidden;margin:12px 0;gap:2px}
+.aqi-bar{flex:1;border-radius:1px}
+
+/* ACTIONS */
+.action-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:16px}
+.action-btn{background:var(--c2);border:1px solid var(--border);border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;transition:all .2s}
+.action-btn:hover{border-color:rgba(0,201,167,.3);background:rgba(0,201,167,.04);transform:translateY(-2px)}
+.action-icon{font-size:22px;margin-bottom:6px}
+.action-label{font-size:10px;color:var(--text2);font-weight:500;line-height:1.3}
+
+/* PROGRESS RING */
+.ring-wrap{position:relative;width:60px;height:60px;flex-shrink:0}
+.ring-wrap svg{transform:rotate(-90deg)}
+.ring-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--text)}
+
+/* SPO2 */
+.spo2-display{display:flex;align-items:baseline;gap:4px;justify-content:center}
+.spo2-val{font-family:var(--font-head);font-size:52px;font-weight:800;color:var(--low)}
+.spo2-unit{font-size:18px;color:var(--text3);font-weight:300}
+
+/* INPUT */
+.form-group{margin-bottom:12px}
+.form-label{font-size:11px;color:var(--text3);font-weight:500;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em}
+.form-input{width:100%;background:var(--c2);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:10px;font-family:var(--font-body);font-size:13px;outline:none;transition:border-color .2s}
+.form-input:focus{border-color:rgba(61,142,248,.4)}
+.form-select{width:100%;background:var(--c2);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:10px;font-family:var(--font-body);font-size:13px;outline:none;-webkit-appearance:none}
+.btn-primary{width:100%;padding:12px;background:var(--accent);color:#0a0f1e;border:none;border-radius:12px;font-family:var(--font-body);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary:hover{background:#00b396;transform:translateY(-1px)}
+.btn-outline{padding:8px 16px;background:none;border:1px solid var(--border);color:var(--text2);border-radius:10px;font-family:var(--font-body);font-size:12px;cursor:pointer;transition:all .2s}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{padding:8px 16px;background:rgba(224,92,111,.1);border:1px solid rgba(224,92,111,.3);color:var(--high);border-radius:10px;font-family:var(--font-body);font-size:12px;cursor:pointer;transition:all .2s}
+.btn-danger:hover{background:rgba(224,92,111,.2)}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;font-size:11px;cursor:pointer;transition:all .2s;margin:3px;border:1px solid var(--border);color:var(--text3);background:none}
+.tag.sel{border-color:var(--accent);color:var(--accent);background:rgba(0,201,167,.08)}
+.disclaimer{background:rgba(245,166,35,.06);border:1px solid rgba(245,166,35,.15);border-radius:12px;padding:12px;margin:16px;font-size:11px;color:var(--mod);line-height:1.5}
+.typing span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--text3);margin:0 2px;animation:typingDot 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes typingDot{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+.weather-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+.weather-item{background:var(--c2);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+.weather-icon{font-size:24px;margin-bottom:4px}
+.weather-val{font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--text)}
+.weather-lbl{font-size:10px;color:var(--text3);margin-top:2px}
+.tab-row{display:flex;gap:4px;padding:4px;background:var(--c2);border-radius:10px;margin-bottom:12px}
+.tab{flex:1;padding:7px 4px;text-align:center;font-size:11px;font-weight:500;color:var(--text3);cursor:pointer;border-radius:8px;transition:all .2s;border:none;background:none}
+.tab.active{background:rgba(0,201,167,.12);color:var(--accent)}
+.warn-item{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:12px;margin-bottom:8px}
+.warn-info{background:rgba(61,142,248,.08);border:1px solid rgba(61,142,248,.2)}
+.warn-warn{background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2)}
+.warn-crit{background:rgba(255,61,113,.08);border:1px solid rgba(255,61,113,.25)}
+.warn-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.warn-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px}
+.warn-desc{font-size:11px;color:var(--text3);line-height:1.4}
+.slider-row{margin-bottom:14px}
+.slider-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.slider-lbl{font-size:12px;color:var(--text2)}
+.slider-val{font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--accent)}
+input[type=range]{width:100%;height:4px;-webkit-appearance:none;background:var(--c3);border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;transition:transform .1s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+.cough-visual{display:flex;align-items:flex-end;gap:3px;height:60px;justify-content:center;padding:8px 0}
+.cough-bar{width:8px;border-radius:4px 4px 0 0;background:var(--accent2);opacity:.7;transition:height .1s}
+.rec-btn{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;transition:all .2s;margin:0 auto;border:none;background:var(--accent);animation:none}
+.rec-btn.recording{background:var(--high);animation:recPulse 1s infinite}
+@keyframes recPulse{0%,100%{box-shadow:0 0 0 0 rgba(224,92,111,.4)}50%{box-shadow:0 0 0 12px rgba(224,92,111,0)}}
+.condition-card{background:var(--c2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:6px}
+.cond-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.cond-name{font-size:13px;font-weight:500;color:var(--text)}
+.cond-pct{font-family:var(--font-head);font-size:13px;font-weight:700}
+.cond-bar{height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.cond-fill{height:100%;border-radius:2px;transition:width .6s ease}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#0a0f1e;flex-shrink:0}
+</style>
+</head>
+<body>
+<h2 class="sr-only">Lung Whisperer — Advanced AI-Powered Respiratory Health Platform</h2>
+
+<nav class="nav" id="nav">
+  <button class="nav-btn active" onclick="showPage('dashboard')">Dashboard</button>
+  <button class="nav-btn" onclick="showPage('chatbot')">AI Chatbot</button>
+  <button class="nav-btn" onclick="showPage('xray')">X-Ray AI</button>
+  <button class="nav-btn" onclick="showPage('cough')">Cough Recorder</button>
+  <button class="nav-btn" onclick="showPage('breathing')">Breathing</button>
+  <button class="nav-btn" onclick="showPage('analytics')">Analytics</button>
+  <button class="nav-btn" onclick="showPage('medications')">Meds</button>
+  <button class="nav-btn" onclick="showPage('smoking')">Quit Smoking</button>
+  <button class="nav-btn" onclick="showPage('weather')">Weather Impact</button>
+  <button class="nav-btn" onclick="showPage('warnings')">Early Warning</button>
+  <button class="nav-btn" onclick="showPage('settings')">Profile</button>
+</nav>
+
+<!-- ═══ DASHBOARD ═══ -->
+<div id="page-dashboard" class="page active">
+  <div class="hero">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div class="hero-label" id="dashGreeting">Good Morning</div>
+        <div class="hero-title" id="dashUsername">Welcome 👋</div>
+        <div class="hero-sub" id="dashDate">Lung health overview</div>
+        <div class="hero-badge"><span class="pulse-dot"></span>Live Monitoring Active</div>
+      </div>
+      <div class="avatar" id="dashAvatar">?</div>
+    </div>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-card low" onclick="showPage('analytics')">
+      <div class="metric-icon">🫁</div>
+      <div class="metric-val">38 <span class="unit">/ 100</span></div>
+      <div class="metric-label">Risk Score</div>
+      <div class="metric-trend trend-down">▼ improving vs yesterday</div>
+    </div>
+    <div class="metric-card info" onclick="showPage('analytics')">
+      <div class="metric-icon">🩸</div>
+      <div class="metric-val">96 <span class="unit">%</span></div>
+      <div class="metric-label">SpO₂ Level</div>
+      <div class="metric-trend trend-stable">● normal range</div>
+    </div>
+    <div class="metric-card mod">
+      <div class="metric-icon">💨</div>
+      <div class="metric-val">85 <span class="unit">AQI</span></div>
+      <div class="metric-label">Air Quality</div>
+      <div class="metric-trend trend-up">▲ moderate · caution</div>
+    </div>
+    <div class="metric-card low" onclick="showPage('breathing')">
+      <div class="metric-icon">🌬️</div>
+      <div class="metric-val">12 <span class="unit">sec</span></div>
+      <div class="metric-label">Exhale Capacity</div>
+      <div class="metric-trend trend-up">▲ +2s from last week</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title">7-Day Risk Trend</div>
+      <span class="section-link" onclick="showPage('analytics')">See all →</span>
+    </div>
+    <div class="card">
+      <div class="chart-wrap"><canvas id="trendChart" role="img" aria-label="7-day lung risk score trend">Risk decreased from 42 to 32.</canvas></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><div class="section-title">Risk Breakdown</div></div>
+    <div class="card">
+      <div id="riskBreakdown"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title">Recent History</div>
+      <span class="section-link" onclick="showPage('analytics')">Full history →</span>
+    </div>
+    <div class="card" style="padding:0">
+      <table class="hist-table" style="padding:4px">
+        <thead><tr><th>Date</th><th>Risk</th><th>SpO₂</th><th>AQI</th><th>Status</th></tr></thead>
+        <tbody id="histRows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head"><div class="section-title">Quick Actions</div></div>
+  </div>
+  <div class="action-grid">
+    <div class="action-btn" onclick="showPage('cough')"><div class="action-icon">🎙️</div><div class="action-label">Record Cough</div></div>
+    <div class="action-btn" onclick="showPage('xray')"><div class="action-icon">🔬</div><div class="action-label">Analyze X-Ray</div></div>
+    <div class="action-btn" onclick="showPage('chatbot')"><div class="action-icon">🤖</div><div class="action-label">AI Doctor</div></div>
+    <div class="action-btn" onclick="showPage('breathing')"><div class="action-icon">🌀</div><div class="action-label">Breathe</div></div>
+    <div class="action-btn" onclick="showPage('medications')"><div class="action-icon">💊</div><div class="action-label">Medications</div></div>
+    <div class="action-btn" onclick="showPage('warnings')"><div class="action-icon">⚠️</div><div class="action-label">Alerts</div></div>
+  </div>
+
+  <div class="disclaimer">⚠️ Research & Educational Use Only. This AI platform does not replace professional medical diagnosis or treatment. Always consult a qualified healthcare provider.</div>
+</div>
+
+<!-- ═══ AI CHATBOT ═══ -->
+<div id="page-chatbot" class="page">
+  <div class="hero">
+    <div class="hero-label">AI-Powered</div>
+    <div class="hero-title">Lung Health Assistant</div>
+    <div class="hero-sub">Symptom assessment · Risk analysis · Personalized advice</div>
+  </div>
+  <div style="padding:12px 16px">
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(0,201,167,.06);border:1px solid rgba(0,201,167,.15);border-radius:10px;margin-bottom:10px;font-size:12px;color:var(--text2)">
+      <span style="font-size:14px">🛡️</span>
+      Powered by Claude AI · Symptom checker with risk scoring · Not a medical diagnosis
+    </div>
+    <div class="card" style="padding:0">
+      <div class="chat-chips" id="chatChips">
+        <span class="chip" onclick="askChip('I have been coughing for 3 days')">🤒 Coughing 3 days</span>
+        <span class="chip" onclick="askChip('My SpO2 is 94%')">🩸 SpO2 94%</span>
+        <span class="chip" onclick="askChip('I have chest pain and breathlessness')">💔 Chest pain</span>
+        <span class="chip" onclick="askChip('What AQI level is dangerous for lungs?')">💨 AQI guidance</span>
+        <span class="chip" onclick="askChip('Give me tips to improve lung health')">💡 Lung tips</span>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="msg">
+          <div class="msg-avatar bot-av">AI</div>
+          <div class="msg-bubble bot-bubble">Hello! I'm your AI lung health assistant, powered by Claude. I can help assess respiratory symptoms, analyze your risk level, explain breathing conditions, and give personalized health tips.<br><br>How are you feeling today? Describe any symptoms or ask me anything about lung health.</div>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" class="chat-input" id="chatInput" placeholder="Describe your symptoms or ask a question..." onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="send-btn" onclick="sendChat()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a0f1e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ X-RAY ═══ -->
+<div id="page-xray" class="page">
+  <div class="hero">
+    <div class="hero-label">AI Vision Model</div>
+    <div class="hero-title">Chest X-Ray Analysis</div>
+    <div class="hero-sub">Ensemble AI · GradCAM heatmap · Differential diagnosis</div>
+  </div>
+  <div style="padding:16px">
+    <div id="xrayUploadView">
+      <div class="upload-zone" onclick="document.getElementById('realXrayInput').click()">
+        <input type="file" id="realXrayInput" style="display:none" accept="image/*" onchange="uploadRealXray(this)">
+        <div class="upload-icon">🩻</div>
+        <div class="upload-title">Upload Chest X-Ray</div>
+        <div class="upload-sub" style="margin-top:4px">JPEG, PNG · Max 10MB · AI analysis in ~15s</div>
+        <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+          <span style="font-size:11px;padding:4px 10px;background:rgba(61,142,248,.08);border:1px solid rgba(61,142,248,.15);border-radius:8px;color:var(--accent2)">🧠 Ensemble AI</span>
+          <span style="font-size:11px;padding:4px 10px;background:rgba(0,201,167,.08);border:1px solid rgba(0,201,167,.15);border-radius:8px;color:var(--accent)">🔥 GradCAM Heatmap</span>
+          <span style="font-size:11px;padding:4px 10px;background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.15);border-radius:8px;color:var(--mod)">📋 Full Report</span>
+        </div>
+      </div>
+
+      <div id="xrayDemo" style="display:none;margin-top:16px">
+        <div style="text-align:center;margin-bottom:12px;font-size:12px;color:var(--text3)">— Ensemble Analysis Result —</div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div>
+              <div id="xrayPredText" style="font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--text)">Analyzing...</div>
+              <div id="xrayConfText" style="font-size:11px;color:var(--text3);margin-top:2px">Confidence -</div>
+            </div>
+            <span id="xrayRiskBadge" class="risk-badge risk-low">✓ Low Risk</span>
+          </div>
+
+          <div id="gradcamContainer" style="display:none;margin-bottom:14px;text-align:center">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Clinical Heatmap (Grad-CAM)</div>
+            <img id="gradcamImage" src="" style="width:100%;max-width:300px;border-radius:12px;border:1px solid var(--border)">
+          </div>
+
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Top Differential Match</div>
+            <div class="condition-card">
+              <div class="cond-head" id="dif1Head"><span class="cond-name" id="dif1Name">Loading...</span><span class="cond-pct" id="dif1Score" style="color:var(--low)">--%</span></div>
+              <div class="cond-bar"><div class="cond-fill" id="dif1Bar" style="width:0%;background:var(--low)"></div></div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Pathological Findings</div>
+            <div id="dynamicFindings">
+               <!-- Auto-populated by AI Report -->
+            </div>
+          </div>
+          
+          <div style="margin-bottom:12px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Recommendations</div>
+            <div id="dynamicSuggestions" style="display:flex;flex-direction:column;gap:6px">
+               <!-- Auto-populated by AI Report -->
+            </div>
+          </div>
+
+          <div style="display:flex;gap:6px;margin-top:14px">
+            <button class="btn-outline" style="flex:1">📥 Download PDF</button>
+            <button class="btn-outline" style="flex:1">📤 Share Report</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ COUGH RECORDER ═══ -->
+<div id="page-cough" class="page">
+  <div class="hero">
+    <div class="hero-label">AI Audio Analysis</div>
+    <div class="hero-title">Cough Analysis</div>
+    <div class="hero-sub">ML-powered cough type classification · Severity scoring</div>
+  </div>
+  <div style="padding:16px">
+    <div class="card" style="text-align:center;padding:24px 16px">
+      <div class="cough-visual" id="coughViz">
+        <div class="cough-bar" style="height:20px" id="cb0"></div>
+        <div class="cough-bar" style="height:14px" id="cb1"></div>
+        <div class="cough-bar" style="height:30px" id="cb2"></div>
+        <div class="cough-bar" style="height:18px" id="cb3"></div>
+        <div class="cough-bar" style="height:24px" id="cb4"></div>
+        <div class="cough-bar" style="height:10px" id="cb5"></div>
+        <div class="cough-bar" style="height:28px" id="cb6"></div>
+        <div class="cough-bar" style="height:16px" id="cb7"></div>
+        <div class="cough-bar" style="height:22px" id="cb8"></div>
+        <div class="cough-bar" style="height:12px" id="cb9"></div>
+      </div>
+      <button class="rec-btn" id="recBtn" onclick="toggleRec()">🎙️</button>
+      <div style="font-size:13px;color:var(--text2);margin-top:12px" id="recStatus">Tap to start recording</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">Record 5–10 seconds of natural coughing</div>
+    </div>
+
+    <div id="coughResult" style="display:none;margin-top:12px">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--text)">Analysis Complete</div>
+          <span class="risk-badge risk-mod">Moderate</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div style="background:var(--c2);border-radius:10px;padding:10px;text-align:center">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">COUGH TYPE</div>
+            <div style="font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--accent2)">Dry</div>
+          </div>
+          <div style="background:var(--c2);border-radius:10px;padding:10px;text-align:center">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">SEVERITY SCORE</div>
+            <div style="font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--mod)">62 / 100</div>
+          </div>
+          <div style="background:var(--c2);border-radius:10px;padding:10px;text-align:center">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">FREQUENCY</div>
+            <div style="font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--text)">Frequent</div>
+          </div>
+          <div style="background:var(--c2);border-radius:10px;padding:10px;text-align:center">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">CONFIDENCE</div>
+            <div style="font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--low)">84%</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Likely conditions</div>
+        <div class="condition-card"><div class="cond-head"><span class="cond-name">Upper airway irritation</span><span class="cond-pct" style="color:var(--mod)">65%</span></div><div class="cond-bar"><div class="cond-fill" style="width:65%;background:var(--mod)"></div></div></div>
+        <div class="condition-card"><div class="cond-head"><span class="cond-name">Post-viral cough</span><span class="cond-pct" style="color:var(--accent2)">22%</span></div><div class="cond-bar"><div class="cond-fill" style="width:22%;background:var(--accent2)"></div></div></div>
+        <div style="margin-top:10px;font-size:12px;color:var(--text2);line-height:1.6">• Stay well hydrated — 8+ glasses of water daily<br>• Use a humidifier in sleeping areas<br>• Avoid cold air and irritants<br>• Consider honey and ginger tea for relief</div>
+      </div>
+    </div>
+
+    <div class="section-head" style="padding-top:16px"><div class="section-title">Recent Cough History</div></div>
+    <div class="card" style="padding:0">
+      <table class="hist-table">
+        <thead><tr><th>Date</th><th>Type</th><th>Severity</th><th>Score</th></tr></thead>
+        <tbody>
+          <tr><td style="color:var(--text2)">Apr 9</td><td><span style="color:var(--accent2)">Dry</span></td><td><span class="dot" style="background:var(--mod)"></span> Moderate</td><td style="color:var(--mod);font-family:var(--font-head);font-weight:700">62</td></tr>
+          <tr><td style="color:var(--text2)">Apr 7</td><td><span style="color:var(--low)">Wet</span></td><td><span class="dot" style="background:var(--low)"></span> Mild</td><td style="color:var(--low);font-family:var(--font-head);font-weight:700">28</td></tr>
+          <tr><td style="color:var(--text2)">Apr 5</td><td><span style="color:var(--accent2)">Dry</span></td><td><span class="dot" style="background:var(--mod)"></span> Moderate</td><td style="color:var(--mod);font-family:var(--font-head);font-weight:700">55</td></tr>
+          <tr><td style="color:var(--text2)">Apr 2</td><td><span style="color:var(--high)">Barking</span></td><td><span class="dot" style="background:var(--high)"></span> Severe</td><td style="color:var(--high);font-family:var(--font-head);font-weight:700">78</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ BREATHING EXERCISES ═══ -->
+<div id="page-breathing" class="page">
+  <div class="hero">
+    <div class="hero-label">Guided Exercises</div>
+    <div class="hero-title">Breathing Therapy</div>
+    <div class="hero-sub">5 evidence-based techniques · Animated guidance · Session tracking</div>
+  </div>
+  <div style="padding:16px">
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none" id="exTabs">
+      <button class="ex-btn active" onclick="selectEx(0,this)">Box</button>
+      <button class="ex-btn" onclick="selectEx(1,this)">4-7-8</button>
+      <button class="ex-btn" onclick="selectEx(2,this)">Diaphragm</button>
+      <button class="ex-btn" onclick="selectEx(3,this)">Pursed Lip</button>
+      <button class="ex-btn" onclick="selectEx(4,this)">Energizing</button>
+    </div>
+
+    <div class="card" style="text-align:center">
+      <div style="font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px" id="exName">Box Breathing</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:4px" id="exBenefit">Reduces stress and anxiety</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:16px;line-height:1.5" id="exDesc">Equal phases of inhale, hold, exhale, and hold. Used by Navy SEALs for calm under pressure.</div>
+
+      <div class="breath-outer" id="breathOuter">
+        <div class="breath-ring" id="breathRing" style="border-color:rgba(0,201,167,.3)"></div>
+        <div class="breath-inner" id="breathInner" onclick="toggleBreath()">
+          <div class="breath-phase" id="breathPhase">TAP TO<br>START</div>
+          <div class="breath-count" id="breathCount">-</div>
+        </div>
+      </div>
+
+      <div class="breath-progress" id="breathProgress">Round 0 / 4</div>
+
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:16px;font-size:12px;color:var(--text3)" id="exTiming">
+        <span>↑ Inhale: 4s</span>
+        <span>⏸ Hold: 4s</span>
+        <span>↓ Exhale: 4s</span>
+        <span>⏸ Hold: 4s</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:10px">
+      <div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:10px">Today's Session</div>
+      <div style="display:flex;justify-content:space-around;text-align:center">
+        <div><div style="font-family:var(--font-head);font-size:20px;font-weight:700;color:var(--accent)" id="sessRounds">0</div><div style="font-size:10px;color:var(--text3)">Rounds Done</div></div>
+        <div><div style="font-family:var(--font-head);font-size:20px;font-weight:700;color:var(--accent2)" id="sessMins">0</div><div style="font-size:10px;color:var(--text3)">Minutes</div></div>
+        <div><div style="font-family:var(--font-head);font-size:20px;font-weight:700;color:var(--mod)" id="sessStreak">3</div><div style="font-size:10px;color:var(--text3)">Day Streak</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ANALYTICS ═══ -->
+<div id="page-analytics" class="page">
+  <div class="hero">
+    <div class="hero-label">Health Intelligence</div>
+    <div class="hero-title">Analytics Dashboard</div>
+    <div class="hero-sub">Trend analysis · SpO₂ monitoring · Recovery tracking</div>
+  </div>
+  <div style="padding:16px">
+    <div class="tab-row">
+      <button class="tab active" onclick="setAnalyticsTab('overview',this)">Overview</button>
+      <button class="tab" onclick="setAnalyticsTab('breathing',this)">Breathing</button>
+      <button class="tab" onclick="setAnalyticsTab('cough',this)">Cough</button>
+      <button class="tab" onclick="setAnalyticsTab('spo2',this)">SpO₂</button>
+    </div>
+
+    <div id="atab-overview">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px">
+        <div class="metric-card info"><div class="metric-icon">📊</div><div class="metric-val">38<span class="unit">/100</span></div><div class="metric-label">Avg Risk Score</div></div>
+        <div class="metric-card low"><div class="metric-icon">📈</div><div class="metric-val">-8%</div><div class="metric-label">Week vs Week</div></div>
+      </div>
+      <div class="card"><div class="chart-wrap" style="height:200px"><canvas id="analyticsChart" role="img" aria-label="Analytics overview chart">Risk and SpO2 trends over 14 days.</canvas></div></div>
+    </div>
+    <div id="atab-breathing" style="display:none">
+      <div class="metric-card low" style="margin-bottom:10px"><div class="metric-icon">🌬️</div><div class="metric-val">12<span class="unit"> sec avg</span></div><div class="metric-label">Exhale Duration (7-day avg)</div></div>
+      <div class="card"><div class="chart-wrap" style="height:180px"><canvas id="breathChart" role="img" aria-label="Breathing capacity over time">Exhale duration increased over time.</canvas></div></div>
+    </div>
+    <div id="atab-cough" style="display:none">
+      <div class="metric-card mod" style="margin-bottom:10px"><div class="metric-icon">🎙️</div><div class="metric-val">2.3<span class="unit"> per day</span></div><div class="metric-label">Avg Cough Episodes</div></div>
+      <div class="card"><div class="chart-wrap" style="height:180px"><canvas id="coughChartAnalytics" role="img" aria-label="Cough severity over time">Cough severity trending downward.</canvas></div></div>
+    </div>
+    <div id="atab-spo2" style="display:none">
+      <div class="card" style="text-align:center;margin-bottom:10px">
+        <div class="spo2-display"><span class="spo2-val">96</span><span class="spo2-unit">%</span></div>
+        <div style="font-size:12px;color:var(--low);margin-top:4px">● Normal range (95–100%)</div>
+      </div>
+      <div class="card"><div class="chart-wrap" style="height:180px"><canvas id="spo2Chart" role="img" aria-label="SpO2 levels over time">SpO2 maintained in normal range.</canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MEDICATIONS ═══ -->
+<div id="page-medications" class="page">
+  <div class="hero">
+    <div class="hero-label">Medication Management</div>
+    <div class="hero-title">Reminders & Tracking</div>
+    <div class="hero-sub">Smart scheduling · Adherence monitoring · Refill alerts</div>
+  </div>
+  <div style="padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-size:13px;color:var(--text2)">Today's medications</div>
+      <button class="btn-outline" onclick="toggleAddMed()">+ Add</button>
+    </div>
+
+    <div id="addMedForm" style="display:none" class="card">
+      <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:12px">Add New Medication</div>
+      <div class="form-group"><div class="form-label">Medication Name</div><input type="text" class="form-input" id="medName" placeholder="e.g. Salbutamol 100mcg"></div>
+      <div class="form-group"><div class="form-label">Dosage</div><input type="text" class="form-input" id="medDose" placeholder="e.g. 2 puffs"></div>
+      <div class="form-group"><div class="form-label">Time</div><input type="time" class="form-input" id="medTime" value="08:00"></div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn-primary" style="flex:1" onclick="addMed()">Add Reminder</button>
+        <button class="btn-outline" onclick="toggleAddMed()">Cancel</button>
+      </div>
+    </div>
+
+    <div id="medList"></div>
+
+    <div class="card" style="margin-top:12px">
+      <div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:10px">Adherence This Week</div>
+      <div style="display:flex;gap:4px;align-items:flex-end;height:50px">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="background:var(--low);border-radius:2px;width:100%;height:45px"></div><div style="font-size:9px;color:var(--text3)">Mon</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="background:var(--low);border-radius:2px;width:100%;height:45px"></div><div style="font-size:9px;color:var(--text3)">Tue</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="background:var(--low);border-radius:2px;width:100%;height:45px"></div><div style="font-size:9px;color:var(--text3)">Wed</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="background:var(--mod);border-radius:2px;width:100%;height:25px"></div><div style="font-size:9px;color:var(--text3)">Thu</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="background:var(--low);border-radius:2px;width:100%;height:45px"></div><div style="font-size:9px;color:var(--text3)">Fri</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="background:var(--text3);border-radius:2px;width:100%;height:5px"></div><div style="font-size:9px;color:var(--text3)">Sat</div></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="background:var(--text3);border-radius:2px;width:100%;height:5px"></div><div style="font-size:9px;color:var(--text3)">Sun</div></div>
+      </div>
+      <div style="font-size:12px;color:var(--low);margin-top:8px;text-align:center">83% adherence this week</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SMOKING ═══ -->
+<div id="page-smoking" class="page">
+  <div class="hero">
+    <div class="hero-label">Quit Journey</div>
+    <div class="hero-title">Smoke-Free Tracker</div>
+    <div class="hero-sub">Health milestones · Money saved · Lung recovery timeline</div>
+  </div>
+  <div style="padding:16px">
+    <div class="card">
+      <div class="quit-timer">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:4px">SMOKE-FREE FOR</div>
+        <div class="quit-days">47</div>
+        <div class="quit-label">days · 18 hours · 32 minutes</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px">
+        <div style="background:rgba(0,201,167,.06);border:1px solid rgba(0,201,167,.15);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--low)">940</div>
+          <div style="font-size:10px;color:var(--text3)">Cigarettes avoided</div>
+        </div>
+        <div style="background:rgba(61,142,248,.06);border:1px solid rgba(61,142,248,.15);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--accent2)">₹4,700</div>
+          <div style="font-size:10px;color:var(--text3)">Money saved</div>
+        </div>
+        <div style="background:rgba(245,166,35,.06);border:1px solid rgba(245,166,35,.15);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-family:var(--font-head);font-size:18px;font-weight:700;color:var(--mod)">3.9</div>
+          <div style="font-size:10px;color:var(--text3)">Days of life saved</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head" style="padding-top:16px;padding-bottom:4px"><div class="section-title">Health Milestones</div></div>
+    <div id="milestones"></div>
+
+    <div class="card" style="margin-top:12px">
+      <div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:10px">Lung Recovery Timeline</div>
+      <div style="position:relative;padding-left:16px">
+        <div style="position:absolute;left:4px;top:0;bottom:0;width:2px;background:var(--border);border-radius:1px"></div>
+        <div id="recoveryTimeline"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ WEATHER ═══ -->
+<div id="page-weather" class="page">
+  <div class="hero">
+    <div class="hero-label">Environmental Health</div>
+    <div class="hero-title">Weather &amp; Air Quality</div>
+    <div class="hero-sub">Live GPS · Real-time AQI · Respiratory impact</div>
+  </div>
+  <div style="padding:16px">
+    <div id="wxLoading" class="card" style="text-align:center;padding:32px">
+      <div style="font-size:36px;margin-bottom:12px">🌍</div>
+      <div style="font-family:var(--font-head);font-size:14px;color:var(--text);margin-bottom:6px">Detecting Your Location…</div>
+      <div style="font-size:12px;color:var(--text3)">Allow location access for accurate real-time AQI</div>
+    </div>
+    <div id="wxError" class="card" style="display:none;padding:20px;border-color:rgba(224,92,111,.3)">
+      <div style="font-size:13px;color:#e05c6f;font-weight:600;margin-bottom:6px">⚠ Could Not Get Location</div>
+      <div style="font-size:12px;color:var(--text3)" id="wxErrorMsg">Location access denied or unavailable.</div>
+      <button class="btn-outline" style="margin-top:12px" onclick="loadWeather()">Retry ↺</button>
+    </div>
+    <div id="wxMain" style="display:none">
+      <div class="card" style="padding:20px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;align-items:flex-start">
+          <div>
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">📍 <span id="wxLocation">—</span></div>
+            <div style="display:flex;align-items:flex-end;gap:12px">
+              <div id="wxTempIcon" style="font-size:44px;line-height:1">⛅</div>
+              <div>
+                <div style="font-family:var(--font-head);font-size:38px;font-weight:800;color:var(--text);line-height:1" id="wxTemp">--°C</div>
+                <div style="font-size:12px;color:var(--text2);margin-top:3px" id="wxDesc">—</div>
+              </div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Feels like</div>
+            <div style="font-family:var(--font-head);font-size:24px;font-weight:700;color:var(--accent2)" id="wxFeels">--°C</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:4px" id="wxUpdated">—</div>
+          </div>
+        </div>
+        <div style="background:var(--c2);border-radius:12px;padding:14px;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">US Air Quality Index</div>
+            <div style="font-family:var(--font-head);font-size:26px;font-weight:800" id="wxAqiNum">--</div>
+          </div>
+          <div style="height:10px;border-radius:5px;background:linear-gradient(90deg,#1a9641 0%,#a6d96a 25%,#ffffbf 45%,#f5a623 65%,#e05c6f 85%,#7b1735 100%);position:relative;margin-bottom:6px">
+            <div id="wxAqiPointer" style="position:absolute;top:-3px;width:6px;height:16px;background:white;border-radius:3px;box-shadow:0 0 8px rgba(0,0,0,.5);transform:translateX(-50%);transition:left .9s ease;left:0%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-bottom:8px">
+            <span>0</span><span>100</span><span>200</span><span>300+</span>
+          </div>
+          <div style="font-size:14px;font-weight:700" id="wxAqiLabel">—</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px" id="wxAqiAdvice"></div>
+        </div>
+        <div class="weather-grid">
+          <div class="weather-item"><div class="weather-icon">💧</div><div class="weather-val" id="wxHumidity">--%</div><div class="weather-lbl">Humidity</div></div>
+          <div class="weather-item"><div class="weather-icon">💨</div><div class="weather-val" id="wxWind">-- km/h</div><div class="weather-lbl">Wind</div></div>
+          <div class="weather-item"><div class="weather-icon">🌫️</div><div class="weather-val" id="wxPm25">--</div><div class="weather-lbl">PM2.5 µg/m³</div></div>
+          <div class="weather-item"><div class="weather-icon">🌪️</div><div class="weather-val" id="wxPm10">--</div><div class="weather-lbl">PM10 µg/m³</div></div>
+        </div>
+      </div>
+      <div class="section-head" style="padding:4px 0 8px"><div class="section-title">Respiratory Impact Assessment</div></div>
+      <div id="wxImpact"></div>
+      <div style="text-align:center;margin-top:14px">
+        <span style="font-size:11px;color:var(--text3);cursor:pointer" onclick="loadWeather()">🔄 Refresh live data</span>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ═══ EARLY WARNING ═══ -->
+<div id="page-warnings" class="page">
+  <div class="hero">
+    <div class="hero-label">Predictive AI</div>
+    <div class="hero-title">Early Warning System</div>
+    <div class="hero-sub">Pattern detection · Trend alerts · Proactive health protection</div>
+  </div>
+  <div style="padding:16px">
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:500;color:var(--text)">Overall Alert Level</div>
+        <span class="risk-badge risk-mod">⚠ Moderate</span>
+      </div>
+      <div style="font-size:12px;color:var(--text3);line-height:1.5">2 active warnings based on your recent health data and environmental conditions. Review and take action to prevent deterioration.</div>
+    </div>
+
+    <div class="warn-item warn-warn">
+      <span class="warn-icon">📈</span>
+      <div><div class="warn-title">Rising Cough Frequency</div><div class="warn-desc">Your cough severity score increased 15% over the last 3 days. Monitor closely and consider consulting a doctor if trend continues.</div></div>
+    </div>
+    <div class="warn-item warn-warn">
+      <span class="warn-icon">💨</span>
+      <div><div class="warn-title">Air Quality Degradation</div><div class="warn-desc">AQI has been above 80 for 3 consecutive days. Limit outdoor exposure, especially during morning hours (7–10 AM).</div></div>
+    </div>
+    <div class="warn-item warn-info">
+      <span class="warn-icon">🌬️</span>
+      <div><div class="warn-title">Breathing Capacity Stable</div><div class="warn-desc">Your exhale duration has been consistent at 11–13 seconds over the past week. Keep up the breathing exercises.</div></div>
+    </div>
+    <div class="warn-item warn-info">
+      <span class="warn-icon">🩸</span>
+      <div><div class="warn-title">SpO₂ Within Normal Range</div><div class="warn-desc">Blood oxygen levels have been consistently at 95–97%. No intervention required at this time.</div></div>
+    </div>
+
+    <div class="card" style="margin-top:4px">
+      <div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:10px">AI Risk Forecast (7 days)</div>
+      <div class="chart-wrap" style="height:140px"><canvas id="forecastChart" role="img" aria-label="7-day risk forecast">Risk forecast shows stable to slightly improving trend.</canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS ═══ -->
+<div id="page-settings" class="page">
+  <div class="hero">
+    <div class="hero-label">Your Profile</div>
+    <div class="hero-title">Health Settings</div>
+    <div class="hero-sub">Personal data · Medical history · Preferences</div>
+  </div>
+  <div style="padding:16px">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <div class="avatar" id="settingsAvatar" style="width:48px;height:48px;font-size:18px">?</div>
+        <div>
+          <div style="font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--text)" id="settingsName">—</div>
+          <div style="font-size:12px;color:var(--text3)" id="settingsRole">Patient · Lung Whisperer</div>
+        </div>
+      </div>
+      <div class="form-group"><div class="form-label">Full Name</div><input class="form-input" type="text" value="Sai Kumar" id="setName"></div>
+      <div class="form-group"><div class="form-label">Age</div><input class="form-input" type="number" value="24" id="setAge"></div>
+      <div class="form-group">
+        <div class="form-label">Gender</div>
+        <select class="form-select" id="setGender">
+          <option value="male" selected>Male</option>
+          <option value="female">Female</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Smoking History</div>
+        <select class="form-select" id="setSmoking">
+          <option value="never" selected>Never smoked</option>
+          <option value="former">Former smoker</option>
+          <option value="current">Current smoker</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:10px">
+      <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:12px">Medical History</div>
+      <div id="medHistTags" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+    </div>
+
+    <div class="card" style="margin-top:10px">
+      <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:12px">Notification Preferences</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-size:13px;color:var(--text)">Daily Health Reminders</div><div style="font-size:11px;color:var(--text3)">Morning check-in notifications</div></div>
+        <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-size:13px;color:var(--text)">Emergency Alerts</div><div style="font-size:11px;color:var(--text3)">Critical SpO₂ warnings</div></div>
+        <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0">
+        <div><div style="font-size:13px;color:var(--text)">Medication Reminders</div><div style="font-size:11px;color:var(--text3)">Scheduled dose alerts</div></div>
+        <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <button class="btn-primary" style="margin-top:12px" onclick="savSettings()">Save Profile</button>
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <button class="btn-outline" style="flex:1">📤 Export Data</button>
+      <button class="btn-danger" style="flex:1">🗑️ Clear History</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const PAGES=['dashboard','chatbot','xray','cough','breathing','analytics','medications','smoking','weather','warnings','settings'];
+let chartsInit={};
+let breathState={active:false,phase:'inhale',count:0,round:0,timer:null,sessRounds:0,startTime:null};
+let recState={recording:false,timer:null,t:0};
+let meds=[{name:'Salbutamol 100mcg',dose:'2 puffs',time:'08:00',active:true},{name:'Fluticasone 250mcg',dose:'1 puff',time:'20:00',active:true},{name:'Montelukast 10mg',dose:'1 tablet',time:'21:00',active:false}];
+let medConditions=['Asthma','COPD','Bronchitis','Pneumonia','Tuberculosis','Lung Cancer','Pulmonary Fibrosis','Sleep Apnea','Allergies','Heart Disease','Diabetes','Hypertension'];
+let selConditions=new Set(['Asthma']);
+
+const exercises=[
+  {name:'Box Breathing',desc:'Equal phases of inhale, hold, exhale, and hold. Used by Navy SEALs for calm under pressure.',benefit:'Reduces stress and anxiety',inhale:4,hold:4,exhale:4,holdAfter:4,rounds:4},
+  {name:'4-7-8 Technique',desc:'A natural tranquilizer for the nervous system. Promotes deep relaxation.',benefit:'Improves sleep quality',inhale:4,hold:7,exhale:8,holdAfter:0,rounds:4},
+  {name:'Diaphragmatic',desc:'Deep belly breathing strengthens the diaphragm and increases lung capacity.',benefit:'Strengthens lung capacity',inhale:4,hold:2,exhale:6,holdAfter:0,rounds:6},
+  {name:'Pursed-Lip',desc:'Slow, controlled breathing through pursed lips. Ideal for COPD and asthma management.',benefit:'Eases breathlessness',inhale:2,hold:0,exhale:4,holdAfter:0,rounds:8},
+  {name:'Energizing Breath',desc:'Short, powerful breaths to increase energy. Also called Bellows Breath.',benefit:'Boosts energy and focus',inhale:2,hold:1,exhale:2,holdAfter:0,rounds:10},
+];
+let curEx=0;
+
+function showPage(id){
+  PAGES.forEach(p=>{
+    const el=document.getElementById('page-'+p);
+    if(el)el.classList.remove('active');
+    const btn=document.querySelector(`button[onclick="showPage('${p}')"]`);
+    if(btn)btn.classList.remove('active');
+  });
+  const pg=document.getElementById('page-'+id);
+  if(pg)pg.classList.add('active');
+  const nb=document.querySelector(`button[onclick="showPage('${id}')"]`);
+  if(nb)nb.classList.add('active');
+  if(!chartsInit[id]){chartsInit[id]=true;setTimeout(()=>initCharts(id),100);}  if(id==='weather')loadWeather();if(id==='weather')loadWeather();
+}
+
+function initCharts(id){
+  const commonOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#4a6285',font:{size:10}},grid:{color:'rgba(74,98,133,.15)'}},y:{ticks:{color:'#4a6285',font:{size:10}},grid:{color:'rgba(74,98,133,.15)'}}}};
+  if(id==='dashboard'){
+    const tc=document.getElementById('trendChart');
+    if(tc&&!tc.chart){
+      const dates=['Mar 30','Apr 1','Apr 3','Apr 5','Apr 7','Apr 8','Apr 9'];
+      const scores=[42,45,38,35,41,36,32];
+      tc.chart=new Chart(tc,{type:'line',data:{labels:dates,datasets:[{label:'Risk',data:scores,borderColor:'#00c9a7',backgroundColor:'rgba(0,201,167,.08)',fill:true,tension:.4,pointBackgroundColor:'#00c9a7',pointRadius:3}]},options:{...commonOpts,scales:{...commonOpts.scales,y:{...commonOpts.scales.y,suggestedMin:20,suggestedMax:60}}}});
+    }
+    initRiskBreakdown();initHistRows();
+  }
+  if(id==='analytics'){
+    const ac=document.getElementById('analyticsChart');
+    if(ac&&!ac.chart){
+      const dates=['Mar 26','Mar 28','Mar 30','Apr 1','Apr 3','Apr 5','Apr 7','Apr 9'];
+      ac.chart=new Chart(ac,{type:'line',data:{labels:dates,datasets:[{label:'Risk Score',data:[48,44,40,38,42,36,34,32],borderColor:'#e05c6f',backgroundColor:'rgba(224,92,111,.06)',fill:true,tension:.4,pointRadius:2},{label:'SpO2',data:[94,95,95,96,95,96,97,96],borderColor:'#00c9a7',backgroundColor:'rgba(0,201,167,.06)',fill:true,tension:.4,pointRadius:2,yAxisID:'y2'}]},options:{...commonOpts,plugins:{legend:{display:true,labels:{color:'#8fa3c8',font:{size:10},boxWidth:10}}},scales:{...commonOpts.scales,y2:{position:'right',ticks:{color:'#4a6285',font:{size:10}},grid:{display:false}}}}});
+    }
+    const bc=document.getElementById('breathChart');
+    if(bc&&!bc.chart){bc.chart=new Chart(bc,{type:'bar',data:{labels:['Apr 1','Apr 3','Apr 5','Apr 7','Apr 9'],datasets:[{label:'Exhale (s)',data:[8,9,11,10,12],backgroundColor:'rgba(61,142,248,.6)',borderColor:'#3d8ef8',borderWidth:1}]},options:{...commonOpts}});}
+    const cc=document.getElementById('coughChartAnalytics');
+    if(cc&&!cc.chart){cc.chart=new Chart(cc,{type:'bar',data:{labels:['Apr 1','Apr 3','Apr 5','Apr 7','Apr 9'],datasets:[{label:'Severity Score',data:[78,62,58,55,55],backgroundColor:'rgba(245,166,35,.5)',borderColor:'#f5a623',borderWidth:1}]},options:{...commonOpts}});}
+    const sc=document.getElementById('spo2Chart');
+    if(sc&&!sc.chart){sc.chart=new Chart(sc,{type:'line',data:{labels:['Apr 1','Apr 3','Apr 5','Apr 7','Apr 9'],datasets:[{label:'SpO2 %',data:[94,95,95,96,96],borderColor:'#00c9a7',backgroundColor:'rgba(0,201,167,.08)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:'#00c9a7'}]},options:{...commonOpts,scales:{...commonOpts.scales,y:{...commonOpts.scales.y,suggestedMin:92,suggestedMax:100}}}});}
+  }
+  if(id==='warnings'){
+    const fc=document.getElementById('forecastChart');
+    if(fc&&!fc.chart){fc.chart=new Chart(fc,{type:'line',data:{labels:['Today','+1d','+2d','+3d','+4d','+5d','+6d'],datasets:[{label:'Forecast Risk',data:[38,36,34,35,33,32,30],borderColor:'#3d8ef8',backgroundColor:'rgba(61,142,248,.06)',fill:true,tension:.4,pointRadius:2,borderDash:[4,2]}]},options:{...commonOpts,scales:{...commonOpts.scales,y:{...commonOpts.scales.y,suggestedMin:20,suggestedMax:50}}}});}
+  }
+}
+
+function initRiskBreakdown(){
+  const el=document.getElementById('riskBreakdown');
+  if(!el)return;
+  const factors=[['Cough Duration',65,'#e05c6f'],['Breathlessness',40,'#f5a623'],['SpO₂ Level',30,'#3d8ef8'],['AQI Impact',55,'#f5a623'],['Age Factor',20,'#8fa3c8'],['Medical History',25,'#e05c6f']];
+  el.innerHTML=factors.map(([n,v,c])=>`<div class="bar-row"><div class="bar-name" style="font-size:11px;color:var(--text3)">${n}</div><div class="bar-bg"><div class="bar-fill" style="width:${v}%;background:${c}"></div></div><div class="bar-val">${v}%</div></div>`).join('');
+}
+
+function initHistRows(){
+  const el=document.getElementById('histRows');
+  if(!el)return;
+  const data=[['Apr 9','38','Moderate','96','85'],['Apr 8','36','Moderate','96','80'],['Apr 7','41','Moderate','95','90'],['Apr 5','35','Moderate','96','75'],['Apr 3','45','High','95','105']];
+  const riskCols={'Low':'var(--low)','Moderate':'var(--mod)','High':'var(--high)'};
+  el.innerHTML=data.map(([d,s,c,o,a])=>`<tr><td style="color:var(--text2)">${d}</td><td style="font-family:var(--font-head);font-weight:700;color:${riskCols[c]||'var(--text)'}">${s}</td><td style="color:var(--text2)">${o}%</td><td style="color:var(--text2)">${a}</td><td><span class="dot" style="background:${riskCols[c]}"></span></td></tr>`).join('');
+}
+
+// CHAT
+let chatLoading=false;
+async function sendChat(){
+  if(chatLoading)return;
+  const inp=document.getElementById('chatInput');
+  const msg=inp.value.trim();
+  if(!msg)return;
+  inp.value='';
+  addMsg('user',msg);
+  chatLoading=true;
+  const typId='typing-'+Date.now();
+  const msgs=document.getElementById('chatMessages');
+  msgs.innerHTML+=`<div class="msg" id="${typId}"><div class="msg-avatar bot-av">AI</div><div class="msg-bubble bot-bubble"><span class="typing"><span></span><span></span><span></span></span></div></div>`;
+  msgs.scrollTop=msgs.scrollHeight;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'You are an expert AI lung health assistant for the Lung Whisperer app. You help users understand respiratory symptoms, lung health, breathing conditions (COPD, asthma, bronchitis, pneumonia), air quality impacts, SpO2 levels, and general pulmonary wellness. Keep responses concise (2-4 paragraphs max), empathetic, and always remind users you are not a replacement for medical diagnosis. Use medical knowledge but explain in clear, accessible language. Include risk indicators when relevant.',messages:[{role:'user',content:msg}]})});
+    const d=await r.json();
+    const reply=d.content?.[0]?.text||'I apologize, I could not process your request. Please try again.';
+    document.getElementById(typId)?.remove();
+    addMsg('bot',reply);
+  }catch(e){
+    document.getElementById(typId)?.remove();
+    addMsg('bot','I\'m having trouble connecting right now. Please check your connection and try again.');
+  }
+  chatLoading=false;
+}
+
+function addMsg(role,content){
+  const msgs=document.getElementById('chatMessages');
+  const div=document.createElement('div');
+  div.className=`msg ${role}`;
+  div.innerHTML=`<div class="msg-avatar ${role==='bot'?'bot-av':'user-av'}">${role==='bot'?'AI':'SK'}</div><div class="msg-bubble ${role==='bot'?'bot-bubble':'user-bubble'}">${content.replace(/\n/g,'<br>')}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+function askChip(q){
+  document.getElementById('chatInput').value=q;
+  sendChat();
+}
+
+// BREATHING
+function selectEx(i,btn){
+  curEx=i;
+  stopBreath();
+  document.querySelectorAll('#exTabs .ex-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const ex=exercises[i];
+  document.getElementById('exName').textContent=ex.name;
+  document.getElementById('exBenefit').textContent=ex.benefit;
+  document.getElementById('exDesc').textContent=ex.desc;
+  const t=[`↑ Inhale: ${ex.inhale}s`];
+  if(ex.hold)t.push(`⏸ Hold: ${ex.hold}s`);
+  t.push(`↓ Exhale: ${ex.exhale}s`);
+  if(ex.holdAfter)t.push(`⏸ Hold: ${ex.holdAfter}s`);
+  document.getElementById('exTiming').innerHTML=t.map(x=>`<span>${x}</span>`).join('');
+  document.getElementById('breathPhase').textContent='TAP TO\nSTART';
+  document.getElementById('breathCount').textContent='-';
+  document.getElementById('breathProgress').textContent=`Round 0 / ${ex.rounds}`;
+}
+
+function stopBreath(){
+  if(breathState.timer)clearInterval(breathState.timer);
+  breathState={...breathState,active:false,phase:'inhale',count:0,round:0,timer:null};
+  const inner=document.getElementById('breathInner');
+  if(inner){inner.style.transform='scale(1)';inner.style.background='rgba(0,201,167,.08)';}
+  const ring=document.getElementById('breathRing');
+  if(ring)ring.style.borderColor='rgba(0,201,167,.3)';
+}
+
+function toggleBreath(){
+  if(breathState.active){stopBreath();document.getElementById('breathPhase').textContent='TAP TO\nSTART';document.getElementById('breathCount').textContent='-';return;}
+  breathState.active=true;
+  breathState.round=0;
+  runBreathPhase('inhale');
+}
+
+function runBreathPhase(phase){
+  const ex=exercises[curEx];
+  const dur={inhale:ex.inhale,hold:ex.hold,exhale:ex.exhale,holdAfter:ex.holdAfter||0};
+  const labels={inhale:'Breathe In',hold:'Hold',exhale:'Breathe Out',holdAfter:'Hold'};
+  const colors={inhale:'rgba(0,201,167,.15)',hold:'rgba(245,166,35,.12)',exhale:'rgba(61,142,248,.12)',holdAfter:'rgba(245,166,35,.12)'};
+  const scales={inhale:1.25,hold:1.25,exhale:0.85,holdAfter:0.85};
+  const ringCols={inhale:'rgba(0,201,167,.5)',hold:'rgba(245,166,35,.5)',exhale:'rgba(61,142,248,.5)',holdAfter:'rgba(245,166,35,.5)'};
+
+  if((phase==='hold'&&dur.hold===0)||(phase==='holdAfter'&&dur.holdAfter===0)){
+    const next={inhale:'hold',hold:'exhale',exhale:'holdAfter',holdAfter:'inhale'}[phase];
+    runBreathPhase(next);return;
+  }
+
+  breathState.phase=phase;
+  const d=dur[phase];
+  breathState.count=d;
+  document.getElementById('breathPhase').textContent=labels[phase];
+  document.getElementById('breathCount').textContent=d;
+  const inner=document.getElementById('breathInner');
+  inner.style.transform=`scale(${scales[phase]})`;
+  inner.style.background=colors[phase];
+  const ring=document.getElementById('breathRing');
+  ring.style.borderColor=ringCols[phase];
+
+  if(breathState.timer)clearInterval(breathState.timer);
+  breathState.timer=setInterval(()=>{
+    breathState.count--;
+    document.getElementById('breathCount').textContent=breathState.count;
+    if(breathState.count<=0){
+      clearInterval(breathState.timer);
+      const next={inhale:'hold',hold:'exhale',exhale:'holdAfter',holdAfter:'inhale'}[phase];
+      if(phase==='holdAfter'||(phase==='exhale'&&dur.holdAfter===0)){
+        breathState.round++;
+        breathState.sessRounds++;
+        document.getElementById('sessRounds').textContent=breathState.sessRounds;
+        if(!breathState.startTime)breathState.startTime=Date.now();
+        const mins=Math.floor((Date.now()-breathState.startTime)/60000);
+        document.getElementById('sessMins').textContent=mins;
+        document.getElementById('breathProgress').textContent=`Round ${breathState.round} / ${ex.rounds}`;
+        if(breathState.round>=ex.rounds){
+          stopBreath();
+          document.getElementById('breathPhase').textContent='COMPLETE!';
+          document.getElementById('breathCount').textContent='✓';
+          inner.style.background='rgba(0,201,167,.15)';
+          return;
+        }
+      }
+      if(breathState.active)runBreathPhase(next);
+    }
+  },1000);
+}
+
+// COUGH RECORDER
+let mediaRecorder;
+let audioChunks = [];
+
+async function toggleRec(){
+  if(recState.recording){
+    // Stop recording
+    recState.recording=false;
+    clearInterval(recState.timer);
+    document.getElementById('recBtn').className='rec-btn';
+    document.getElementById('recBtn').textContent='🎙️';
+    document.getElementById('recStatus').textContent='Analyzing cough with Ensemble...';
+    
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      mediaRecorder.stop();
+    }
+    return;
+  }
+  
+  // Start recording
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    
+    mediaRecorder.ondataavailable = event => {
+      audioChunks.push(event.data);
+    };
+    
+    mediaRecorder.onstop = async () => {
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'cough.webm');
+      formData.append('user_id', '1');
+      
+      try {
+        const res = await fetch('http://localhost:8000/api/predict/audio', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        
+        document.getElementById('recStatus').textContent='Analysis complete!';
+        document.getElementById('coughResult').style.display='block';
+        
+        // Update UI with real prediction
+        document.getElementById('coughResult').innerHTML = `
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div style="font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--text)">Analysis Complete</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+              <div style="background:var(--c2);border-radius:10px;padding:10px;text-align:center">
+                <div style="font-size:10px;color:var(--text3);margin-bottom:4px">PREDICTION</div>
+                <div style="font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--accent2)">${data.prediction}</div>
+              </div>
+              <div style="background:var(--c2);border-radius:10px;padding:10px;text-align:center">
+                <div style="font-size:10px;color:var(--text3);margin-bottom:4px">CONFIDENCE</div>
+                <div style="font-family:var(--font-head);font-size:16px;font-weight:700;color:var(--low)">${data.confidence}%</div>
+              </div>
+            </div>
+          </div>
+        `;
+      } catch (err) {
+        document.getElementById('recStatus').textContent='Analysis failed.';
+        console.error(err);
+      }
+      
+      // Stop all tracks to release mic
+      stream.getTracks().forEach(track => track.stop());
+    };
+    
+    mediaRecorder.start();
+    
+    recState.recording=true;
+    recState.t=0;
+    document.getElementById('recBtn').className='rec-btn recording';
+    document.getElementById('recBtn').textContent='⏹';
+    document.getElementById('coughResult').style.display='none';
+    
+    recState.timer=setInterval(()=>{
+      recState.t++;
+      document.getElementById('recStatus').textContent=`Recording... ${recState.t}s`;
+      for(let i=0;i<10;i++){
+        const h=Math.floor(Math.random()*50)+8;
+        document.getElementById('cb'+i).style.height=h+'px';
+        document.getElementById('cb'+i).style.opacity=0.5+Math.random()*0.5;
+      }
+      if(recState.t>=15){toggleRec();}
+    },1000);
+    
+  } catch (err) {
+    alert("Microphone access is required for cough analysis.");
+    console.error(err);
+  }
+}
+
+// MEDICATIONS
+function renderMeds(){
+  const el=document.getElementById('medList');
+  if(!el)return;
+  const icons=['💊','🫧','💉','🩹'];
+  el.innerHTML=meds.map((m,i)=>`
+    <div class="med-card">
+      <div class="med-icon">${icons[i%icons.length]}</div>
+      <div style="flex:1">
+        <div class="med-name">${m.name}</div>
+        <div class="med-detail">${m.dose} · Daily</div>
+      </div>
+      <div class="med-time">
+        <div class="med-time-val">${m.time}</div>
+        <div style="font-size:9px;color:var(--text3);margin-top:2px">${m.active?'Active':'Paused'}</div>
+      </div>
+      <label class="toggle-switch" style="margin-left:8px"><input type="checkbox" ${m.active?'checked':''} onchange="toggleMed(${i})"><span class="toggle-slider"></span></label>
+    </div>`).join('');
+}
+
+function toggleMed(i){meds[i].active=!meds[i].active;renderMeds();}
+function toggleAddMed(){const f=document.getElementById('addMedForm');f.style.display=f.style.display==='none'?'block':'none';}
+function addMed(){
+  const n=document.getElementById('medName').value.trim();
+  const d=document.getElementById('medDose').value.trim();
+  const t=document.getElementById('medTime').value;
+  if(!n)return;
+  meds.push({name:n,dose:d||'As prescribed',time:t,active:true});
+  renderMeds();
+  toggleAddMed();
+  document.getElementById('medName').value='';
+  document.getElementById('medDose').value='';
+}
+
+// SMOKING MILESTONES
+function renderMilestones(){
+  const el=document.getElementById('milestones');
+  if(!el)return;
+  const hoursQuit=47*24+18;
+  const ms=[{h:1,t:'Heart rate drops to normal'},{h:12,t:'Carbon monoxide normalizes'},{h:48,t:'Nerve endings start regrowing'},{h:72,t:'Breathing becomes easier'},{h:336,t:'Circulation improves significantly'},{h:720,t:'Lung function increases 30%'},{h:2160,t:'Cilia regrow, lungs self-clean'},{h:8760,t:'Heart disease risk halved'}];
+  el.innerHTML=ms.map(m=>{
+    const done=hoursQuit>=m.h;
+    return `<div class="milestone-row ${done?'milestone-done':'milestone-pending'}">
+      <span class="milestone-icon">${done?'💪':'⏳'}</span>
+      <span class="milestone-text">${m.t}</span>
+      <span class="milestone-check">${done?'✅':'○'}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderRecovery(){
+  const el=document.getElementById('recoveryTimeline');
+  if(!el)return;
+  const items=[{label:'1 month',desc:'Lung function +30%, less coughing',done:true},{label:'3 months',desc:'Cilia regrow, better mucus clearance',done:false},{label:'6 months',desc:'Significantly reduced respiratory infections',done:false},{label:'1 year',desc:'Coronary disease risk halved',done:false}];
+  el.innerHTML=items.map(i=>`
+    <div style="position:relative;padding-left:20px;margin-bottom:12px">
+      <div style="position:absolute;left:-10px;top:4px;width:12px;height:12px;border-radius:50%;background:${i.done?'var(--accent)':'var(--border)'};border:2px solid ${i.done?'var(--accent)':'var(--text3)'}"></div>
+      <div style="font-size:12px;font-weight:500;color:${i.done?'var(--text)':'var(--text3)'}">After ${i.label}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">${i.desc}</div>
+    </div>`).join('');
+}
+
+function renderMedHistory(){
+  const el=document.getElementById('medHistTags');
+  if(!el)return;
+  el.innerHTML=medConditions.map(c=>`<span class="tag ${selConditions.has(c)?'sel':''}" onclick="toggleCond('${c}')">${c}</span>`).join('');
+}
+
+function toggleCond(c){
+  if(selConditions.has(c))selConditions.delete(c);else selConditions.add(c);
+  renderMedHistory();
+}
+
+function setAnalyticsTab(id,btn){
+  ['overview','breathing','cough','spo2'].forEach(t=>{
+    const el=document.getElementById('atab-'+t);
+    if(el)el.style.display=t===id?'block':'none';
+  });
+  document.querySelectorAll('#page-analytics .tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  setTimeout(()=>initCharts('analytics'),50);
+}
+
+async function uploadRealXray(input) {
+  if(!input.files || input.files.length === 0) return;
+  const file = input.files[0];
+  
+  const el=document.getElementById('xrayDemo');
+  el.style.display='block';
+  document.getElementById('xrayPredText').textContent='Calculating AI Score...';
+  document.getElementById('xrayConfText').textContent='Ensembling architectures...';
+  document.getElementById('xrayRiskBadge').textContent='...';
+  document.getElementById('dif1Name').textContent='...';
+  document.getElementById('dif1Score').textContent='--%';
+  document.getElementById('dif1Bar').style.width='0%';
+  document.getElementById('dynamicFindings').innerHTML='<div style="font-size:11px;color:var(--text3);padding:8px">Analyzing...</div>';
+  document.getElementById('dynamicSuggestions').innerHTML='';
+  document.getElementById('gradcamContainer').style.display='none';
+  
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('user_id', '1'); // Fixed user_id for demo
+  
+  try {
+    const res = await fetch('http://localhost:8000/api/predict', {
+      method: 'POST',
+      body: formData
+    });
+    
+    const data = await res.json();
+    document.getElementById('xrayPredText').textContent = data.prediction || 'Unknown';
+    document.getElementById('xrayConfText').textContent = `Analyzed · Confidence ${data.confidence}%`;
+    
+    const prediction = data.prediction || 'Unknown';
+    document.getElementById('xrayPredText').textContent = prediction;
+    document.getElementById('xrayConfText').textContent = `Analyzed · Confidence ${data.confidence}%`;
+    
+    const badge = document.getElementById('xrayRiskBadge');
+    
+    document.getElementById('dif1Name').textContent = prediction;
+    document.getElementById('dif1Score').textContent = data.confidence + '%';
+    document.getElementById('dif1Bar').style.width = data.confidence + '%';
+    
+    if (data.gradcam) {
+        document.getElementById('gradcamContainer').style.display='block';
+        document.getElementById('gradcamImage').src = data.gradcam;
+    }
+
+    const findingContainer = document.getElementById('dynamicFindings');
+    findingContainer.innerHTML = '';
+    if (data.findings) {
+        data.findings.forEach((f, idx) => {
+            const sevClass = prediction === 'Normal' ? 'sev-normal' : (prediction === 'COVID-19' || prediction === 'Tuberculosis' ? 'sev-severe' : 'sev-mild');
+            const findingType = prediction === 'Normal' ? 'Normal' : 'Abnormal';
+            findingContainer.innerHTML += `<div class="finding-row"><span class="finding-sev ${sevClass}">${findingType}</span><div><div style="font-size:12px;font-weight:500;color:var(--text)">Finding ${idx+1}</div><div style="font-size:11px;color:var(--text3)">${f}</div></div></div>`;
+        });
+    }
+
+    const suggContainer = document.getElementById('dynamicSuggestions');
+    suggContainer.innerHTML = '';
+    if (data.suggestions) {
+        data.suggestions.forEach(s => {
+            suggContainer.innerHTML += `<div style="background:rgba(255,166,35,0.1);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--text);border-left:3px solid var(--mod)">↳ ${s}</div>`;
+        });
+    }
+
+    if (prediction === 'Normal') {
+        badge.className = 'risk-badge risk-low';
+        badge.textContent = '✓ Low Risk';
+        document.getElementById('dif1Bar').style.background = 'var(--low)';
+        document.getElementById('dif1Score').style.color = 'var(--low)';
+    } else if (prediction === 'COVID-19' || prediction === 'Tuberculosis') {
+        badge.className = 'risk-badge risk-high';
+        badge.textContent = '⚠ High Risk';
+        document.getElementById('dif1Bar').style.background = 'var(--high)';
+        document.getElementById('dif1Score').style.color = 'var(--high)';
+    } else {
+        badge.className = 'risk-badge risk-mod';
+        badge.textContent = '⚠ Moderate Risk';
+        document.getElementById('dif1Bar').style.background = 'var(--mod)';
+        document.getElementById('dif1Score').style.color = 'var(--mod)';
+    }
+  } catch (e) {
+    document.getElementById('xrayPredText').textContent = 'Analysis Failed';
+    console.error(e);
+  }
+}
+
+function savSettings(){
+  const name=document.getElementById('setName').value;
+  alert(`Profile saved: ${name}`);
+}
+
+// LIVE WEATHER & AQI
+var WX_CODE={0:'☀️ Clear Sky',1:'🌤 Mainly Clear',2:'⛅ Partly Cloudy',3:'☁️ Overcast',45:'🌫 Foggy',48:'🌫 Rime Fog',51:'🌦 Drizzle',53:'🌦 Mod. Drizzle',55:'🌧 Heavy Drizzle',61:'🌧 Light Rain',63:'🌧 Rain',65:'🌧 Heavy Rain',71:'🌨 Light Snow',73:'�� Snow',75:'❄️ Heavy Snow',80:'🌦 Showers',81:'🌧 Mod. Showers',82:'⛈ Violent Showers',95:'⛈ Thunderstorm',96:'⛈ Thunder+Hail',99:'⛈ Heavy Thunder'};
+function aqiInfo(a){if(a<=50)return{label:'Good',color:'#1a9641',advice:'Air quality is excellent. Great for outdoor activity.',cls:'warn-info'};if(a<=100)return{label:'Moderate',color:'#a6d96a',advice:'Generally acceptable. Very sensitive individuals should limit prolonged exertion.',cls:'warn-info'};if(a<=150)return{label:'Unhealthy for Sensitive Groups',color:'#f5a623',advice:'People with respiratory disease should reduce outdoor exertion. Wear a mask if needed.',cls:'warn-warn'};if(a<=200)return{label:'Unhealthy',color:'#e05c6f',advice:'Everyone may experience effects. Limit outdoor activity. Wear N95 mask.',cls:'warn-warn'};if(a<=300)return{label:'Very Unhealthy',color:'#9b59b6',advice:'Health alert: Serious effects for all. Stay indoors with windows closed.',cls:'warn-warn'};return{label:'Hazardous ⚠',color:'#7b1735',advice:'EMERGENCY. Avoid all outdoor activity. Seal doors and windows.',cls:'warn-warn'};}
+async function fetchWeatherData(lat,lon){
+  var[wxRes,aqRes,geoRes]=await Promise.all([
+    fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&wind_speed_unit=kmh&timezone=auto'),
+    fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude='+lat+'&longitude='+lon+'&current=us_aqi,pm2_5,pm10'),
+    fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lon+'&accept-language=en')
+  ]);
+  return{wx:await wxRes.json(),aq:await aqRes.json(),geo:await geoRes.json()};
+}
+function renderWeather(lat,lon,wx,aq,geo){
+  var cur=wx.current,aqCur=aq.current;
+  var addr=geo.address||{};
+  var place=(addr.city||addr.town||addr.village||addr.county||'Your Location')+(addr.state?', '+addr.state:'');
+  var code=cur.weather_code;
+  var desc=WX_CODE[code]||'🌡️ Weather';
+  var icon=desc.split(' ')[0];
+  var descText=desc.replace(icon,'').trim();
+  var aqi=Math.round(aqCur.us_aqi||0);
+  var info=aqiInfo(aqi);
+  var pct=Math.min((aqi/300)*100,100).toFixed(1);
+  var pm25=parseFloat(aqCur.pm2_5||0).toFixed(1);
+  var pm10=parseFloat(aqCur.pm10||0).toFixed(1);
+  var temp=Math.round(cur.temperature_2m);
+  var feels=Math.round(cur.apparent_temperature);
+  var humid=cur.relative_humidity_2m;
+  var wind=Math.round(cur.wind_speed_10m);
+  document.getElementById('wxLocation').textContent=place;
+  document.getElementById('wxTemp').textContent=temp+'°C';
+  document.getElementById('wxFeels').textContent=feels+'°C';
+  document.getElementById('wxTempIcon').textContent=icon;
+  document.getElementById('wxDesc').textContent=descText;
+  document.getElementById('wxHumidity').textContent=humid+'%';
+  document.getElementById('wxWind').textContent=wind+' km/h';
+  document.getElementById('wxPm25').textContent=pm25;
+  document.getElementById('wxPm10').textContent=pm10;
+  document.getElementById('wxUpdated').textContent='Updated '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  var numEl=document.getElementById('wxAqiNum');
+  numEl.textContent=aqi;numEl.style.color=info.color;
+  var lblEl=document.getElementById('wxAqiLabel');
+  lblEl.textContent=info.label;lblEl.style.color=info.color;
+  document.getElementById('wxAqiAdvice').textContent=info.advice;
+  document.getElementById('wxAqiPointer').style.left=pct+'%';
+  var impacts=[
+    {icon:'🌡️',title:'Temperature: '+temp+'°C',desc:temp>33?'High heat increases breathing effort. Stay hydrated, avoid outdoor exertion.':temp<15?'Cold air can trigger bronchoconstriction. Wear a scarf over your nose outdoors.':'Temperature is in a comfortable respiratory range.',cls:temp>33||temp<15?'warn-warn':'warn-info'},
+    {icon:'💧',title:'Humidity: '+humid+'%',desc:humid>70?'High humidity promotes mold spores. Use dehumidifier and ventilate rooms.':humid<30?'Dry air irritates airways. Use a humidifier and drink extra fluids.':'Humidity is in a comfortable range.',cls:(humid>70||humid<30)?'warn-warn':'warn-info'},
+    {icon:'💨',title:'Wind: '+wind+' km/h',desc:wind>40?'Strong winds carry pollen and dust. Sensitive individuals stay indoors.':wind>20?'Breezy — helps disperse pollutants but may carry allergens.':'Calm winds. Pollutants may accumulate locally.',cls:wind>40?'warn-warn':'warn-info'},
+    {icon:'🌫️',title:'PM2.5: '+pm25+' µg/m³',desc:pm25>35.4?'Elevated fine particles. Wear N95 mask outdoors. Avoid exercise outside.':pm25>12?'Moderate PM2.5. Asthma/COPD patients should limit outdoor activity.':'PM2.5 within safe limits.',cls:pm25>35.4?'warn-warn':'warn-info'}
+  ];
+  document.getElementById('wxImpact').innerHTML=impacts.map(function(i){return'<div class="warn-item '+i.cls+'" style="margin-bottom:8px"><span class="warn-icon">'+i.icon+'</span><div><div class="warn-title">'+i.title+'</div><div class="warn-desc">'+i.desc+'</div></div></div>';}).join('');
+  document.getElementById('wxLoading').style.display='none';
+  document.getElementById('wxMain').style.display='block';
+}
+async function loadWeather(){
+  document.getElementById('wxLoading').style.display='block';
+  document.getElementById('wxError').style.display='none';
+  document.getElementById('wxMain').style.display='none';
+  if(!navigator.geolocation){
+    document.getElementById('wxErrorMsg').textContent='Geolocation not supported by your browser.';
+    document.getElementById('wxLoading').style.display='none';
+    document.getElementById('wxError').style.display='block';
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    async function(pos){
+      try{
+        var lat=pos.coords.latitude.toFixed(4);
+        var lon=pos.coords.longitude.toFixed(4);
+        var data=await fetchWeatherData(lat,lon);
+        renderWeather(lat,lon,data.wx,data.aq,data.geo);
+      }catch(e){
+        // Fallback: try IP geolocation
+        try{
+          var ipRes=await fetch('https://ipapi.co/json/');
+          var ip=await ipRes.json();
+          var lat2=(ip.latitude||17.0).toFixed(4);
+          var lon2=(ip.longitude||82.0).toFixed(4);
+          var data2=await fetchWeatherData(lat2,lon2);
+          renderWeather(lat2,lon2,data2.wx,data2.aq,{address:{city:ip.city,state:ip.region}});
+        }catch(e2){
+          document.getElementById('wxErrorMsg').textContent='Failed to load: '+e2.message;
+          document.getElementById('wxLoading').style.display='none';
+          document.getElementById('wxError').style.display='block';
+        }
+      }
+    },
+    async function(err){
+      // GPS denied — fall back to IP location silently
+      try{
+        var ipRes=await fetch('https://ipapi.co/json/');
+        var ip=await ipRes.json();
+        var lat3=(ip.latitude||17.0).toFixed(4);
+        var lon3=(ip.longitude||82.0).toFixed(4);
+        var data3=await fetchWeatherData(lat3,lon3);
+        renderWeather(lat3,lon3,data3.wx,data3.aq,{address:{city:ip.city,state:ip.region}});
+      }catch(e3){
+        document.getElementById('wxErrorMsg').textContent='Location denied and IP fallback failed. Check your network.';
+        document.getElementById('wxLoading').style.display='none';
+        document.getElementById('wxError').style.display='block';
+      }
+    },
+    {timeout:8000,maximumAge:60000}
+  );
+}
+// LIVE WEATHER + AQI
+var WX_ICONS={"0":"☀️","1":"🌤","2":"⛅","3":"☁️","45":"��","48":"🌫","51":"🌦","53":"🌦","55":"🌧","61":"��","63":"🌧","65":"🌧","71":"🌨","73":"🌨","75":"❄️","80":"🌦","81":"🌧","82":"⛈","95":"⛈","96":"⛈","99":"⛈"};
+var WX_DESC={"0":"Clear Sky","1":"Mainly Clear","2":"Partly Cloudy","3":"Overcast","45":"Foggy","48":"Foggy","51":"Drizzle","53":"Drizzle","55":"Heavy Drizzle","61":"Light Rain","63":"Rain","65":"Heavy Rain","71":"Light Snow","73":"Snow","75":"Heavy Snow","80":"Showers","81":"Heavy Showers","82":"Violent Showers","95":"Thunderstorm","96":"Thunderstorm","99":"Thunderstorm"};
+function aqiInfo(a){if(a<=50)return{l:"Good",c:"#1a9641",t:"Air quality is excellent. Great for outdoor activity."};if(a<=100)return{l:"Moderate",c:"#a6d96a",t:"Generally acceptable. Very sensitive individuals may limit prolonged exertion."};if(a<=150)return{l:"Unhealthy for Sensitive Groups",c:"#f5a623",t:"People with respiratory disease should reduce outdoor exertion."};if(a<=200)return{l:"Unhealthy",c:"#e05c6f",t:"Everyone may experience effects. Limit outdoor activity. Wear N95 mask."};if(a<=300)return{l:"Very Unhealthy",c:"#9b59b6",t:"Health alert: Stay indoors with windows closed."};return{l:"Hazardous",c:"#7b1735",t:"EMERGENCY: Avoid all outdoor activity."};}
+function setEl(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+function renderWeather(wx,aq,city,region){
+  var cur=wx.current,aqCur=aq.current;
+  var code=String(cur.weather_code);
+  var icon=WX_ICONS[code]||"🌡️";
+  var desc=WX_DESC[code]||"Weather";
+  var aqi=Math.round(aqCur.us_aqi||0);
+  var info=aqiInfo(aqi);
+  var pct=Math.min((aqi/300)*100,100).toFixed(1);
+  var pm25=parseFloat(aqCur.pm2_5||0).toFixed(1);
+  var pm10=parseFloat(aqCur.pm10||0).toFixed(1);
+  var temp=Math.round(cur.temperature_2m);
+  var feels=Math.round(cur.apparent_temperature);
+  var humid=cur.relative_humidity_2m;
+  var wind=Math.round(cur.wind_speed_10m);
+  setEl("wxLocation",(city||"Your Location")+(region?", "+region:""));
+  setEl("wxTemp",temp+"°C");setEl("wxFeels",feels+"°C");setEl("wxDesc",desc);
+  setEl("wxHumidity",humid+"%");setEl("wxWind",wind+" km/h");
+  setEl("wxPm25",pm25);setEl("wxPm10",pm10);
+  setEl("wxUpdated","Updated "+new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"}));
+  var iEl=document.getElementById("wxTempIcon");if(iEl)iEl.textContent=icon;
+  var nEl=document.getElementById("wxAqiNum");if(nEl){nEl.textContent=aqi;nEl.style.color=info.c;}
+  var lEl=document.getElementById("wxAqiLabel");if(lEl){lEl.textContent=info.l;lEl.style.color=info.c;}
+  setEl("wxAqiAdvice",info.t);
+  var pEl=document.getElementById("wxAqiPointer");if(pEl)pEl.style.left=pct+"%";
+  var impData=[
+    {icon:"��️",title:"Temperature: "+temp+"°C",desc:temp>33?"High heat stresses airways. Stay hydrated, limit outdoor exertion.":temp<15?"Cold air triggers bronchoconstriction. Cover nose and mouth outdoors.":"Comfortable temperature for breathing.",warn:temp>33||temp<15},
+    {icon:"💧",title:"Humidity: "+humid+"%",desc:humid>70?"High humidity encourages mold. Use dehumidifier indoors.":humid<30?"Dry air irritates airways. Use a humidifier and drink more water.":"Comfortable humidity range for breathing.",warn:humid>70||humid<30},
+    {icon:"💨",title:"Wind: "+wind+" km/h",desc:wind>40?"Strong winds carry pollen and dust. Sensitive people stay indoors.":wind>20?"Breezy conditions may disperse pollutants but carry allergens.":"Calm winds. Monitor AQI closely.",warn:wind>40},
+    {icon:"🌫️",title:"PM2.5: "+pm25+" µg/m³",desc:pm25>35.4?"Elevated fine particles. Wear N95 mask outdoors. Avoid exercise outside.":pm25>12?"Moderate PM2.5. Asthma/COPD patients limit outdoor activity.":"PM2.5 within safe limits — low particulate risk.",warn:pm25>35.4}
+  ];
+  var imp=document.getElementById("wxImpact");
+  if(imp)imp.innerHTML=impData.map(function(x){return'<div class="warn-item '+(x.warn?"warn-warn":"warn-info")+'" style="margin-bottom:8px"><span class="warn-icon">'+x.icon+'</span><div><div class="warn-title">'+x.title+'</div><div class="warn-desc">'+x.desc+'</div></div></div>';}).join("");
+  document.getElementById("wxLoading").style.display="none";
+  document.getElementById("wxMain").style.display="block";
+}
+async function doFetch(lat,lon,city,region){
+  var p1=fetch("https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lon+"&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&wind_speed_unit=kmh&timezone=auto");
+  var p2=fetch("https://air-quality-api.open-meteo.com/v1/air-quality?latitude="+lat+"&longitude="+lon+"&current=us_aqi,pm2_5,pm10");
+  var results=await Promise.all([p1,p2]);
+  var wx=await results[0].json();
+  var aq=await results[1].json();
+  renderWeather(wx,aq,city,region);
+}
+async function loadWeather(){
+  document.getElementById("wxLoading").style.display="block";
+  document.getElementById("wxError").style.display="none";
+  document.getElementById("wxMain").style.display="none";
+  async function ipFallback(){
+    try{
+      var r=await fetch("https://ipapi.co/json/");
+      var d=await r.json();
+      await doFetch((d.latitude||17).toFixed(4),(d.longitude||81.5).toFixed(4),d.city||"Your City",d.region||"");
+    }catch(e){
+      setEl("wxErrorMsg","Network error: "+e.message);
+      document.getElementById("wxLoading").style.display="none";
+      document.getElementById("wxError").style.display="block";
+    }
+  }
+  if(!navigator.geolocation){return ipFallback();}
+  navigator.geolocation.getCurrentPosition(
+    async function(pos){
+      try{
+        var lat=pos.coords.latitude.toFixed(4),lon=pos.coords.longitude.toFixed(4);
+        var gR=await fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat="+lat+"&lon="+lon+"&accept-language=en");
+        var geo=await gR.json();
+        var a=geo.address||{};
+        await doFetch(lat,lon,a.city||a.town||a.village||a.county||"Your Location",a.state||"");
+      }catch(e){ipFallback();}
+    },
+    function(){ipFallback();},
+    {timeout:8000,maximumAge:60000}
+  );
+}
+// INIT
+function populateUserInfo() {
+  const username = localStorage.getItem('lw_username') || 'User';
+  const role = localStorage.getItem('lw_role') || 'patient';
+
+  // Time-based greeting
+  const h = new Date().getHours();
+  const greeting = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
+
+  // Today's date
+  const today = new Date().toLocaleDateString('en-IN', {day:'numeric', month:'long', year:'numeric'});
+
+  // Initials from username
+  const parts = username.trim().split(/\s+/);
+  const initials = parts.length >= 2
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : username.substring(0, 2).toUpperCase();
+
+  // Dashboard hero
+  const greetEl = document.getElementById('dashGreeting');
+  const nameEl = document.getElementById('dashUsername');
+  const dateEl = document.getElementById('dashDate');
+  const avatarEl = document.getElementById('dashAvatar');
+  if (greetEl) greetEl.textContent = greeting;
+  if (nameEl) nameEl.textContent = username + ' 👋';
+  if (dateEl) dateEl.textContent = 'Lung health overview · ' + today;
+  if (avatarEl) avatarEl.textContent = initials;
+
+  // Settings panel
+  const sNameEl = document.getElementById('settingsName');
+  const sRoleEl = document.getElementById('settingsRole');
+  const sAvEl = document.getElementById('settingsAvatar');
+  const setNameInput = document.getElementById('setName');
+  if (sNameEl) sNameEl.textContent = username;
+  if (sRoleEl) sRoleEl.textContent = role.charAt(0).toUpperCase() + role.slice(1) + ' · Lung Whisperer';
+  if (sAvEl) sAvEl.textContent = initials;
+  if (setNameInput) setNameInput.value = username;
+}
+
+window.onload=function(){
+  populateUserInfo();
+  renderMeds();
+  renderMilestones();
+  renderRecovery();
+  renderMedHistory();
+  initCharts('dashboard');
+};
+</script>
+</body>
+</html>

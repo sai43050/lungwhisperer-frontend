@@ -1,0 +1,8 @@
+Composite
+bacteria         2772
+Normal           1576
+Virus            1493
+COVID-19           58
+Streptococcus       5
+SARS                4
+ARDS                2

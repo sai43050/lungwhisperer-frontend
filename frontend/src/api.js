@@ -1,0 +1,126 @@
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: '/api'
+});
+
+// Add interceptor to append JWT
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('access_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export const login = async (username, password) => {
+  const formData = new URLSearchParams();
+  formData.append('username', username);
+  formData.append('password', password);
+  
+  const response = await api.post(`/auth/login`, formData, {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+  });
+  
+  if (response.data && response.data.access_token) {
+    localStorage.setItem('access_token', response.data.access_token);
+    // Persist full user model for frontend metadata mapping
+    localStorage.setItem('user', JSON.stringify({
+      user_id: response.data.user_id,
+      username: response.data.username,
+      role: response.data.role
+    }));
+  }
+  return response.data;
+};
+
+export const register = async (username, password, role) => {
+  const response = await api.post(`/auth/register`, { username, password, role });
+  return response.data;
+};
+
+export const getCurrentUser = () => {
+  const user = localStorage.getItem('user');
+  return user ? JSON.parse(user) : null;
+};
+
+export const logout = () => {
+  localStorage.removeItem('user');
+  localStorage.removeItem('access_token');
+};
+
+export const predictScan = async (userId, file) => {
+  const formData = new FormData();
+  formData.append('user_id', userId);
+  formData.append('file', file);
+
+  const response = await api.post('/predict', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+export const predictAudio = async (userId, file) => {
+  const formData = new FormData();
+  formData.append('user_id', userId);
+  formData.append('file', file);
+
+  const response = await api.post('/predict/audio', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+export const getHistory = async (userId) => {
+  const response = await api.get(`/history?user_id=${userId}`);
+  return response.data;
+};
+
+// --- Monitoring APIs ---
+
+export const simulateVitals = async (userId, spo2, respiratoryRate, heartRate) => {
+  const response = await api.post('/vitals', {
+    user_id: userId,
+    spo2: spo2,
+    respiratory_rate: respiratoryRate,
+    heart_rate: heartRate
+  });
+  return response.data;
+};
+
+export const getVitals = async (userId) => {
+  const response = await api.get(`/vitals/${userId}`);
+  return response.data;
+};
+
+export const getVitalsHistory = async (userId) => {
+  const response = await api.get(`/vitals/${userId}/history`);
+  return response.data;
+};
+
+export const getAlerts = async (userId) => {
+  const response = await api.get(`/alerts/${userId}`);
+  return response.data;
+};
+
+export const getAllPatients = async () => {
+  const response = await api.get('/patients');
+  return response.data;
+};
+
+// --- Generative AI APIs ---
+export const generateMedicalReport = async (userId) => {
+  const response = await api.get(`/ai/report/${userId}`);
+  return response.data;
+};
+
+export const sendAIChatMessage = async (message) => {
+  const response = await api.post('/ai/chat', { message });
+  return response.data;
+};
+
+export default api;

@@ -1,0 +1,13 @@
+# Docker build ignore — keeps image lean
+venv/
+__pycache__/
+*.py[cod]
+*.zip
+dataset/
+*.csv
+lung_disease.db
+.git/
+.gitignore
+*.log
+Tubercolosis.zip
+archive.zip
