@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install CPU-only PyTorch first
 RUN pip install --no-cache-dir \
-    torch==2.2.2+cpu torchvision==0.17.2+cpu \
+    torch==2.2.2+cpu torchvision==0.17.2+cpu torchaudio==2.2.2+cpu \
     --extra-index-url https://download.pytorch.org/whl/cpu
 
 # Hard-pin numpy BEFORE installing other packages.
