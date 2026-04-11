@@ -1,237 +1,353 @@
-import { useLocation, useNavigate } from 'react-router-dom';
-import { AlertCircle, CheckCircle2, ChevronLeft, Microscope, Stethoscope, Lightbulb, ScanLine } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { AlertCircle, CheckCircle2, ChevronLeft, Microscope, Stethoscope, Lightbulb, ScanLine, Loader2, Share2, Download, ShieldCheck, Activity } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { getScanResult } from '../api';
 
 export default function Results() {
   const location = useLocation();
   const navigate = useNavigate();
-  const result = location.state?.result;
+  const { id } = useParams();
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  if (!result) {
+  useEffect(() => {
+    const stateResult = location.state?.result;
+    if (stateResult) {
+      setResult(stateResult);
+      setLoading(false);
+      return;
+    }
+    if (id) {
+      getScanResult(id)
+        .then(data => {
+          setResult(data);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error("Failed to fetch scan:", err);
+          setError("Could not load scan result. It may have been deleted or you may not have permission.");
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
+    }
+  }, [id]);
+
+  if (loading) {
     return (
-      <div className="text-center py-20 flex flex-col items-center relative z-10">
-        <div className="bg-yellow-500/10 p-6 rounded-full border border-yellow-500/30 mb-6">
-          <AlertCircle className="h-16 w-16 text-yellow-400" />
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="relative mb-8">
+           <div className="absolute inset-0 bg-cyan-500/20 blur-2xl rounded-full animate-pulse" />
+           <Loader2 className="h-16 w-16 text-cyan-400 animate-spin relative z-10" />
         </div>
-        <h2 className="text-2xl font-display font-bold text-white mb-2">No Result Data Found</h2>
-        <p className="text-slate-400 mt-2 mb-8">Please upload a scan to see results.</p>
+        <h2 className="text-xl font-display font-bold text-white mb-2">Generating Neural Report</h2>
+        <p className="text-slate-500 text-sm font-mono uppercase tracking-[0.3em] animate-pulse">Analyzing Biomarkers...</p>
+      </div>
+    );
+  }
+
+  if (error || !result) {
+    return (
+      <div className="text-center py-20 flex flex-col items-center relative z-10 px-4">
+        <div className="bg-rose-500/10 p-8 rounded-[2rem] border border-rose-500/20 mb-8 blur-none shadow-2xl">
+          <AlertCircle className="h-20 w-20 text-rose-400" />
+        </div>
+        <h2 className="text-3xl font-display font-black text-white mb-4 tracking-tight">Access Denied / Not Found</h2>
+        <p className="text-slate-400 max-w-md mx-auto mb-10 font-light">
+          {error || "We couldn't retrieve the diagnosis data for this record."}
+        </p>
         <button
           onClick={() => navigate('/upload')}
-          className="px-8 py-3 bg-gradient-to-r from-accent-500 to-vignan-500 text-white font-bold rounded-full shadow-[0_0_20px_rgba(0,154,228,0.4)] hover:shadow-[0_0_30px_rgba(0,154,228,0.6)] transition-all"
+          className="btn-primary px-10 py-4"
         >
-          Go to Upload
+          Return to Analysis Center
         </button>
       </div>
     );
   }
 
-  const rawPrediction = result.prediction;
-  const isAudio = rawPrediction.startsWith("COUGH: ");
-  const predictionText = rawPrediction.replace("X-RAY: ", "").replace("COUGH: ", "");
-  const isNormal = predictionText.toLowerCase() === 'normal' || predictionText.toLowerCase() === 'healthy';
+  const rawPrediction = result.prediction || "Unknown Result";
+  const isAudio = typeof rawPrediction === 'string' && rawPrediction.startsWith("COUGH: ");
+  const predictionText = typeof rawPrediction === 'string' 
+    ? rawPrediction.replace("X-RAY: ", "").replace("COUGH: ", "")
+    : "Analysis Complete";
+  const isNormal = predictionText.toLowerCase().includes('normal') || predictionText.toLowerCase().includes('healthy');
 
-  const statusGradient = isNormal
-    ? 'from-emerald-600/80 to-teal-600/80 border-emerald-500/30'
-    : 'from-red-700/80 to-rose-600/80 border-red-500/30';
-
-  const confidenceColor = result.confidence > 90
-    ? 'from-emerald-500 to-teal-400'
-    : result.confidence > 75
-    ? 'from-yellow-500 to-amber-400'
-    : 'from-red-500 to-rose-400';
-
+  const accentColor = isNormal ? 'cyan' : 'rose';
+  const accentHex = isNormal ? '#22d3ee' : '#fb7185';
+  
   const findings = result.findings || [];
   const suggestions = result.suggestions || [];
 
   return (
-    <div className="max-w-5xl mx-auto pt-4 pb-16 relative z-10 space-y-6">
-      {/* Back button */}
-      <button
-        onClick={() => navigate(isAudio ? '/upload-audio' : '/upload')}
-        className="flex items-center text-slate-400 hover:text-white transition-colors gap-1 group"
-      >
-        <ChevronLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
-        Back to {isAudio ? 'Audio' : 'X-Ray'} Upload
-      </button>
-
-      {/* Main Result Banner */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={`glass-panel p-8 rounded-3xl border bg-gradient-to-r ${statusGradient} shadow-2xl`}
-      >
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className={`p-4 rounded-2xl ${isNormal ? 'bg-emerald-500/30' : 'bg-red-500/30'}`}>
-              {isNormal
-                ? <CheckCircle2 className="h-10 w-10 text-white" />
-                : <AlertCircle className="h-10 w-10 text-white" />}
-            </div>
-            <div>
-              <p className="text-white/70 text-sm font-medium uppercase tracking-widest mb-1">
-                {isAudio ? 'Cough Acoustic Analysis' : 'Chest X-Ray Analysis'} — Result
-              </p>
-              <h1 className="text-3xl font-display font-black text-white tracking-wide">{predictionText}</h1>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-white/50 text-xs font-bold uppercase tracking-widest mb-1">Record ID</p>
-            <p className="text-white font-display font-black text-2xl">#{String(result.id).padStart(5, '0')}</p>
-            <p className="text-white/40 text-xs mt-1">{new Date(result.timestamp).toLocaleString()}</p>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* GradCAM / Scan Visual */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1 }}
-          className="glass-panel p-6 rounded-3xl border border-vignan-500/20 space-y-4"
-        >
-          <h3 className="font-display font-bold text-white flex items-center gap-2 text-lg">
-            <ScanLine className="text-accent-400" size={20} />
-            {isAudio ? 'Audio Classification' : 'GradCAM Activation Heatmap'}
-          </h3>
-
-          {result.gradcam ? (
-            <div className="relative rounded-2xl overflow-hidden border border-accent-500/30 bg-slate-900/60 shadow-[0_0_20px_rgba(0,154,228,0.2)] group">
-              <img
-                src={result.gradcam}
-                alt="GradCAM Heatmap"
-                className="w-full object-contain rounded-2xl transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
-              <div className="absolute top-4 left-4">
-                 <div className="px-3 py-1 bg-red-500/80 backdrop-blur-md rounded-full text-[10px] font-bold text-white uppercase tracking-tighter shadow-lg border border-red-500/50 flex items-center gap-1.5 animate-pulse">
-                    <AlertCircle size={10} /> Active Pathology Matrix
-                 </div>
-              </div>
-              <div className="absolute bottom-4 left-4 right-4">
-                <p className="text-white/80 text-xs font-semibold drop-shadow-md">
-                   Model attention heatmap indicates high probability clinical markers in the highlighted regions.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-vignan-600/30 bg-slate-900/40 p-12 text-center flex flex-col items-center">
-              <div className="bg-vignan-800/50 p-5 rounded-2xl border border-vignan-600/40 mb-4">
-                <Microscope className="h-10 w-10 text-vignan-300" />
-              </div>
-              <p className="text-slate-400 font-medium">
-                {isAudio ? 'Cough signal processed via Mel-Spectrogram' : 'Heatmap not available'}
-              </p>
-              <p className="text-slate-600 text-sm mt-1">
-                {isAudio ? 'ResNet18 audio model classification complete' : 'GradCAM visualization unavailable for this scan'}
-              </p>
-            </div>
-          )}
-
-          {/* Confidence */}
-          <div>
-            <div className="flex justify-between items-end mb-2">
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Model Confidence</p>
-              <p className="text-white font-display font-black text-2xl">{result.confidence}%</p>
-            </div>
-            <div className="w-full bg-slate-800/80 rounded-full h-3 overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${result.confidence}%` }}
-                transition={{ duration: 1.2, ease: 'easeOut', delay: 0.3 }}
-                className={`h-3 rounded-full bg-gradient-to-r ${confidenceColor} shadow-md`}
-              />
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Findings & Suggestions */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className="space-y-6"
-        >
-          {/* Clinical Findings */}
-          {findings.length > 0 && (
-            <div className="glass-panel p-6 rounded-3xl border border-vignan-500/20">
-              <h3 className="font-display font-bold text-white flex items-center gap-2 text-lg mb-4">
-                <Microscope className="text-red-400" size={20} />
-                Clinical Findings
-              </h3>
-              <ul className="space-y-3">
-                {findings.map((f, i) => (
-                  <motion.li
-                    key={i}
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + i * 0.1 }}
-                    className="flex items-center gap-3 bg-red-500/10 p-3 rounded-2xl border border-red-500/20"
-                  >
-                    <div className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
-                    <span className="text-sm text-slate-200 font-light">{f}</span>
-                  </motion.li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Suggestions */}
-          {suggestions.length > 0 && (
-            <div className="glass-panel p-6 rounded-3xl border border-vignan-500/20">
-              <h3 className="font-display font-bold text-white flex items-center gap-2 text-lg mb-4">
-                <Lightbulb className="text-accent-400" size={20} />
-                Recommended Actions
-              </h3>
-              <ul className="space-y-3">
-                {suggestions.map((s, i) => (
-                  <motion.li
-                    key={i}
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 + i * 0.1 }}
-                    className="flex items-center gap-3 bg-accent-500/10 p-3 rounded-2xl border border-accent-500/20"
-                  >
-                    <div className="w-2 h-2 rounded-full bg-accent-400 shrink-0" />
-                    <span className="text-sm text-slate-200 font-light">{s}</span>
-                  </motion.li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Generic Clinical Note */}
-          <div className="glass-panel p-6 rounded-3xl border border-vignan-500/20">
-            <h3 className="font-display font-bold text-white flex items-center gap-2 text-lg mb-3">
-              <Stethoscope className="text-vignan-300" size={20} />
-              Clinical Note
-            </h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              {isNormal
-                ? "The AI system detected no significant pathological markers in this scan. All radiographic features appear within normal limits."
-                : `The AI model identified indicators consistent with ${predictionText}. Immediate follow-up with a qualified radiologist or pulmonologist is strongly recommended.`}
-            </p>
-            <div className="mt-4 p-3 bg-yellow-500/10 rounded-xl border border-yellow-500/20 text-yellow-300 text-xs font-medium">
-              ⚠ This is an AI-assisted preliminary screening. It is not a substitute for professional medical diagnosis.
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+    <div className="max-w-6xl mx-auto pt-6 pb-24 relative z-10 px-4 space-y-6">
+      {/* Navigation & Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-4 py-2">
         <button
           onClick={() => navigate(isAudio ? '/upload-audio' : '/upload')}
-          className="px-8 py-3 glass-panel text-white font-bold rounded-full hover:bg-white/10 transition-all border border-vignan-500/30"
+          className="flex items-center text-slate-400 hover:text-white transition-all gap-2 group px-4 py-2 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/5"
         >
-          New Analysis
+          <ChevronLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+          <span className="text-xs font-bold uppercase tracking-wider font-mono">Back to Scan</span>
+        </button>
+        
+        <div className="flex gap-3">
+           <button className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all">
+              <Share2 size={16} />
+           </button>
+           <button className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all">
+              <Download size={16} />
+           </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        {/* Left Column: Visual Analysis */}
+        <div className="xl:col-span-7 space-y-6">
+          {/* Main Status Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-panel p-8 rounded-[2.5rem] relative overflow-hidden"
+          >
+            {/* Header Accent */}
+            <div className={`absolute top-0 left-0 right-0 h-1.5`}
+              style={{ background: `linear-gradient(90deg, ${accentHex}, transparent)` }} />
+            
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-6">
+              <div className="flex items-center gap-5">
+                <div className={`p-5 rounded-[1.5rem] shadow-2xl relative`}
+                  style={{ background: `${accentHex}15`, border: `1px solid ${accentHex}30` }}>
+                   <div className={`absolute inset-0 blur-xl opacity-20`} style={{ background: accentHex }} />
+                   {isNormal
+                    ? <CheckCircle2 className="h-10 w-10 text-cyan-400 relative z-10" />
+                    : <AlertCircle className="h-10 w-10 text-rose-400 relative z-10" />}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">
+                      Diagnosis Result • ID: #{String(result.id).padStart(5, '0')}
+                    </span>
+                    <div className="flex px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-mono text-emerald-400 uppercase">
+                       Verified
+                    </div>
+                  </div>
+                  <h1 className="text-4xl font-display font-black text-white tracking-tight leading-none mb-1">
+                    {predictionText}
+                  </h1>
+                  <p className="text-slate-400 text-xs font-light tracking-wide italic">
+                    Scanned on {new Date(result.timestamp).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-right sm:text-right w-full sm:w-auto">
+                 <div className="inline-block px-4 py-2 rounded-2xl bg-black/40 border border-white/5">
+                    <div className="text-[9px] font-mono font-bold text-slate-500 uppercase tracking-widest mb-1 text-center">Confidence Score</div>
+                    <div className={`text-3xl font-display font-black text-center`} style={{ color: accentHex }}>
+                       {result.confidence}%
+                    </div>
+                 </div>
+              </div>
+            </div>
+
+            {/* Confidence Bar */}
+            <div className="mt-10">
+               <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 p-[1px]">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${result.confidence}%` }}
+                    transition={{ duration: 1.5, ease: "easeOut" }}
+                    className={`h-full rounded-full shadow-[0_0_15px_rgba(34,211,238,0.4)]`}
+                    style={{ background: `linear-gradient(90deg, ${accentHex}, #8b5cf6)` }}
+                  />
+               </div>
+            </div>
+          </motion.div>
+
+          {/* Visualization Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="glass-panel p-6 rounded-[2.5rem] relative overflow-hidden"
+          >
+            <div className="flex items-center justify-between mb-6 px-2">
+               <h3 className="font-display font-black text-white flex items-center gap-3 text-lg uppercase tracking-tight">
+                  <ScanLine className="text-cyan-400" size={24} />
+                  AI Visualization
+               </h3>
+               <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-mono text-slate-500">
+                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                  Processing Core Active
+               </div>
+            </div>
+
+            {result.gradcam ? (
+              <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-slate-900 shadow-2xl group">
+                <img
+                  src={result.gradcam}
+                  alt="GradCAM Heatmap"
+                  className="w-full object-contain transition-transform duration-1000 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-transparent opacity-80" />
+                
+                {/* HUD Overlay */}
+                <div className="absolute inset-0 pointer-events-none border-[1.5rem] border-transparent p-4 hidden md:block">
+                   <div className="w-12 h-12 border-t-2 border-l-2 border-cyan-500/50 absolute top-0 left-0" />
+                   <div className="w-12 h-12 border-t-2 border-r-2 border-cyan-500/50 absolute top-0 right-0" />
+                   <div className="w-12 h-12 border-b-2 border-l-2 border-cyan-500/50 absolute bottom-0 left-0" />
+                   <div className="w-12 h-12 border-b-2 border-r-2 border-cyan-500/50 absolute bottom-0 right-0" />
+                </div>
+
+                <div className="absolute bottom-8 left-8 right-8">
+                  <div className="bg-black/60 backdrop-blur-md p-4 rounded-2xl border border-white/10">
+                     <p className="text-white text-xs leading-relaxed font-light opacity-90 italic">
+                        "Grad-CAM (Gradient-weighted Class Activation Mapping) highlights high-impact regions utilized by the neural network for diagnostic weight."
+                     </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-3xl border border-white/5 bg-black/40 p-16 text-center flex flex-col items-center">
+                <div className="p-6 bg-white/5 rounded-full border border-white/10 mb-6 group-hover:scale-110 transition-transform">
+                  <Microscope className="h-12 w-12 text-slate-600" />
+                </div>
+                <h4 className="text-white font-bold mb-1">Detailed Mapping Not Available</h4>
+                <p className="text-slate-500 text-sm font-light max-w-xs mx-auto leading-relaxed">
+                  {isAudio 
+                    ? 'Spectral acoustic data was processed via one-dimensional analysis. Heatmap generation is reserved for spatial vision models.' 
+                    : 'The input scan was processed through the primary classification layer but GradCAM generation was offline.'}
+                </p>
+              </div>
+            )}
+          </motion.div>
+        </div>
+
+        {/* Right Column: Clinical Details */}
+        <div className="xl:col-span-5 space-y-6">
+          {/* Findings Card */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="glass-panel p-8 rounded-[2.5rem] border-white/5"
+          >
+            <div className="flex items-center gap-3 mb-8">
+               <div className="p-2.5 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400">
+                  <Microscope size={20} />
+               </div>
+               <h3 className="font-display font-black text-white text-xl uppercase tracking-tight">Clinical Insights</h3>
+            </div>
+            
+            <div className="space-y-4">
+              {findings.length > 0 ? (
+                findings.map((f, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + i * 0.1 }}
+                    className="group"
+                  >
+                    <div className="flex gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 transition-all hover:bg-white/10 hover:border-violet-500/20">
+                      <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-violet-400 shrink-0 shadow-[0_0_8px_#a78bfa]" />
+                      <span className="text-sm text-slate-300 font-light leading-relaxed">{f}</span>
+                    </div>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="text-center py-6 text-slate-500 italic text-sm font-light">
+                   No specific localized pathological markings detected.
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Actionable items */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="glass-panel p-8 rounded-[2.5rem] border-white/5"
+          >
+            <div className="flex items-center gap-3 mb-8">
+               <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                  <Lightbulb size={20} />
+               </div>
+               <h3 className="font-display font-black text-white text-xl uppercase tracking-tight">AI Suggestions</h3>
+            </div>
+
+            <div className="space-y-4">
+              {suggestions.length > 0 ? (
+                suggestions.map((s, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4 + i * 0.1 }}
+                    className="flex gap-4 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10"
+                  >
+                    <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 shadow-[0_0_8px_#fbbf24]" />
+                    <span className="text-sm text-slate-200 font-bold">{s}</span>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="flex gap-4 p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10">
+                   <CheckCircle2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                   <span className="text-sm text-slate-400 font-light">Maintain routine health monitoring as prescribed.</span>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Disclaimer / Note */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+            className="p-6 rounded-[2rem] bg-black/40 border border-white/5 relative overflow-hidden"
+          >
+            <div className="flex items-center gap-3 mb-4">
+               <Stethoscope size={18} className="text-slate-500" />
+               <span className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest">Medical Disclaimer</span>
+            </div>
+            <p className="text-slate-500 text-[11px] leading-relaxed font-light">
+              This report is generated by a neural network. It is intended for preliminary screening and triage. 
+              Lung Whisperer AI is an <span className="text-white font-bold">Assistive Tool</span> and does not provide final definitive medical diagnosis. 
+              Always consult a board-certified Radiologist.
+            </p>
+            <div className="mt-4 flex items-center justify-between">
+               <div className="flex items-center gap-2">
+                  <ShieldCheck size={14} className="text-emerald-500" />
+                  <span className="text-[9px] font-mono text-slate-600 uppercase">HIPAA Encrypted</span>
+               </div>
+               <div className="flex items-center gap-2">
+                  <Activity size={14} className="text-cyan-500" />
+                  <span className="text-[9px] font-mono text-slate-600 uppercase">Core v2.4</span>
+               </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Footer Actions */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-center pt-10">
+        <button
+          onClick={() => navigate(isAudio ? '/upload-audio' : '/upload')}
+          className="px-10 py-4 glass-card text-white font-bold rounded-full hover:bg-white/10 transition-all border border-white/10 shadow-2xl"
+        >
+          New Clinical Analysis
         </button>
         <button
           onClick={() => navigate('/history')}
-          className="px-8 py-3 bg-gradient-to-r from-accent-500 to-vignan-500 text-white font-bold rounded-full shadow-[0_0_20px_rgba(0,154,228,0.3)] hover:shadow-[0_0_30px_rgba(0,154,228,0.5)] transition-all"
+          className="btn-primary px-10 py-4 flex items-center gap-3"
+          style={{ background: `linear-gradient(135deg, ${accentHex}, #818cf8)`, boxShadow: `0 10px 30px ${accentHex}30` }}
         >
-          View Scan History
+          View Longitudinal History
+          <ChevronLeft className="rotate-180 h-4 w-4" />
         </button>
       </div>
     </div>

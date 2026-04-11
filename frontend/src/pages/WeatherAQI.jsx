@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Cloud, Sun, Droplets, Wind, Eye, Thermometer, AlertCircle, CheckCircle2, MapPin, Loader2, Navigation } from 'lucide-react';
+import { Cloud, Sun, Droplets, Wind, Eye, Thermometer, AlertCircle, CheckCircle2, MapPin, Loader2, Navigation, ShieldCheck, Zap } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const WeatherAQI = () => {
   const [data, setData] = useState(null);
@@ -46,7 +47,7 @@ const WeatherAQI = () => {
         },
         (err) => {
           console.warn("Location access denied or unavailable:", err);
-          fetchWeather('Sathupalli'); // Fallback to Sathupalli
+          fetchWeather('Sathupalli'); // Fallback
         }
       );
     } else {
@@ -56,48 +57,68 @@ const WeatherAQI = () => {
 
   if (!API_KEY && !loading) {
     return (
-      <div className="space-y-6 pt-4 max-w-4xl mx-auto pb-24 relative z-10">
-        <div className="glass-panel p-10 rounded-[2.5rem] border border-vignan-500/20 text-center">
-          <div className="bg-accent-500/10 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 border border-accent-500/30">
-            <ShieldCheck className="text-accent-400" size={32} />
+      <div className="space-y-6 pt-6 max-w-4xl mx-auto pb-24 relative z-10 px-4">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="glass-panel p-10 rounded-[3rem] border border-white/5 text-center shadow-2xl"
+        >
+          <div className="bg-cyan-500/10 p-5 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 border border-cyan-500/30">
+            <ShieldCheck className="text-cyan-400" size={32} />
           </div>
-          <h2 className="text-2xl font-display font-black text-white mb-2">Real-Time Connectivity</h2>
-          <p className="text-slate-400 text-sm mb-6 max-w-sm mx-auto">To fetch accurate weather and AQI data for your location, please provide a free API key from WeatherAPI.com.</p>
-          <form onSubmit={handleManualKeySubmit} className="flex gap-3 max-w-md mx-auto">
+          <h2 className="text-3xl font-display font-black text-white mb-2 uppercase tracking-tight">Environmental Intel</h2>
+          <p className="text-slate-400 text-sm mb-10 max-w-sm mx-auto font-light leading-relaxed">
+            To integrate real-time atmospheric telemetry and AQI data, please synchronize with a WeatherAPI gateway.
+          </p>
+          <form onSubmit={handleManualKeySubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
             <input 
               type="text" 
-              placeholder="Enter WeatherAPI.com Key" 
+              placeholder="Paste WeatherAPI.com Access Token" 
               value={manualKey}
               onChange={(e) => setManualKey(e.target.value)}
-              className="flex-grow bg-black/40 border border-vignan-500/30 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-1 focus:ring-accent-400 outline-none"
+              className="flex-grow bg-black/60 border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-white focus:border-cyan-500/40 outline-none transition-all placeholder:text-slate-600 font-mono"
             />
-            <button type="submit" className="px-6 py-2 bg-accent-500 text-white rounded-xl font-bold hover:bg-accent-400 transition-all">Enable</button>
+            <button type="submit" className="btn-primary px-8 py-3.5 whitespace-nowrap">Enable Link</button>
           </form>
-          <p className="mt-6 text-[10px] text-slate-500 uppercase tracking-widest font-black">Secure • Client-side only • No server storage</p>
-        </div>
+          <div className="mt-10 flex items-center justify-center gap-6 text-[10px] font-mono text-slate-600 uppercase tracking-[0.2em]">
+             <span>Encrypted Tunnel</span>
+             <div className="w-1 h-1 rounded-full bg-slate-800" />
+             <span>Zero Data Retention</span>
+          </div>
+        </motion.div>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-white space-y-4">
-        <Loader2 className="animate-spin text-accent-400" size={48} />
-        <p className="font-display font-bold animate-pulse">Requesting Location & Telemetry...</p>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-6">
+        <div className="relative">
+           <div className="absolute inset-0 bg-cyan-500/20 blur-xl rounded-full animate-pulse" />
+           <Loader2 className="animate-spin text-cyan-400 relative z-10" size={56} />
+        </div>
+        <div className="text-center">
+           <h3 className="text-lg font-display font-bold text-white mb-1 uppercase tracking-widest">Awaiting Satellite Uplink</h3>
+           <p className="text-slate-500 font-mono text-[9px] uppercase tracking-[0.3em] animate-pulse">Requesting Atmospheric Telemetry...</p>
+        </div>
       </div>
     );
   }
 
   if (error && !data) {
     return (
-      <div className="glass-panel p-10 rounded-[2.5rem] border border-red-500/20 text-center max-w-2xl mx-auto mt-10">
-        <div className="bg-red-500/10 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 border border-red-500/30">
-          <AlertCircle className="text-red-400" size={32} />
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-panel p-12 rounded-[3rem] border border-rose-500/20 text-center max-w-2xl mx-auto mt-20 shadow-2xl"
+      >
+        <div className="p-5 bg-rose-500/10 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 border border-rose-500/30">
+          <AlertCircle className="text-rose-400" size={32} />
         </div>
-        <h2 className="text-2xl font-display font-black text-white mb-2">Configuration Error</h2>
-        <p className="text-slate-400 text-sm mb-6">{error}</p>
-        <button onClick={() => window.location.reload()} className="px-6 py-2 bg-vignan-600 text-white rounded-xl font-bold hover:bg-vignan-500 transition-all">Retry Connection</button>
-      </div>
+        <h2 className="text-2xl font-display font-black text-white mb-2">Interface Failure</h2>
+        <p className="text-slate-500 text-sm mb-10 font-light italic">{error}</p>
+        <button onClick={() => window.location.reload()} className="btn-primary bg-rose-600 hover:bg-rose-500 px-10">Re-establish Connection</button>
+      </motion.div>
     );
   }
 
@@ -106,109 +127,209 @@ const WeatherAQI = () => {
   const usEpa = aqi['us-epa-index'];
 
   const getAqiConfig = (idx) => {
-    if (idx <= 2) return { label: 'Good', color: 'text-emerald-400', bg: 'bg-emerald-500/20', desc: 'Air quality is satisfactory, and air pollution poses little or no risk.', sev: 'low' };
-    if (idx <= 4) return { label: 'Moderate', color: 'text-vignan-300', bg: 'bg-vignan-500/20', desc: 'Moderate air quality. Sensitive groups should limit outdoor activity.', sev: 'mod' };
-    return { label: 'Unhealthy', color: 'text-rose-400', bg: 'bg-rose-500/20', desc: 'Health alert: everyone may experience health effects. Avoid outdoors.', sev: 'high' };
+    if (idx <= 2) return { label: 'Good', color: '#10b981', glow: 'rgba(16,185,129,0.3)', desc: 'Atmospheric conditions are nominal. Low respiratory risk factor.', sev: 'low' };
+    if (idx <= 4) return { label: 'Moderate', color: '#f59e0b', glow: 'rgba(245,158,11,0.3)', desc: 'Surface-level particulates detected. Sensitive groups should minimize exposure.', sev: 'mod' };
+    return { label: 'Unhealthy', color: '#fb7185', glow: 'rgba(251,113,133,0.3)', desc: 'Elevated pollution levels detected. Respiratory distress protocol recommended.', sev: 'high' };
   };
 
   const aqiConfig = getAqiConfig(usEpa);
 
   return (
-    <div className="space-y-6 pt-4 max-w-4xl mx-auto pb-24 relative z-10">
-      <div className="glass-panel p-8 rounded-[2.5rem] border border-vignan-500/20 shadow-2xl">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+    <div className="space-y-6 pt-6 max-w-5xl mx-auto pb-24 relative z-10 px-4">
+      
+      {/* Background Decor */}
+      <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-cyan-500/5 blur-[120px] rounded-full pointer-events-none" />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-panel p-8 sm:p-12 rounded-[3rem] border-white/5 shadow-2xl relative overflow-hidden"
+      >
+        {/* Top Shimmer */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent" />
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-4xl font-display font-black text-white tracking-tight">Weather <span className="text-accent-400">& AQI</span></h1>
-            <p className="text-vignan-200 text-sm font-light mt-1 uppercase tracking-widest opacity-80">Live Environmental Health Intelligence</p>
-          </div>
-          <div className="bg-black/40 px-6 py-4 rounded-3xl border border-white/5 flex items-center gap-4 group">
-            <div className={`w-3 h-3 rounded-full ${aqiConfig.bg.replace('/20', '')} animate-pulse shadow-[0_0_10px_currentColor]`}></div>
-            <div>
-               <div className="text-[10px] text-slate-500 uppercase tracking-widest font-black flex items-center gap-1">
-                 <MapPin size={10} className="text-accent-400" /> Current Geo-Location
+            <div className="flex items-center gap-2 mb-2">
+               <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+                  <Cloud size={14} className="text-cyan-400" />
                </div>
-               <div className="text-sm font-bold text-white group-hover:text-accent-400 transition-colors">{location}</div>
+               <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-widest">Planetary Operations</span>
+            </div>
+            <h1 className="text-4xl font-display font-black text-white tracking-tight">Environmental <span className="text-gradient-cyan">Intel</span></h1>
+            <p className="text-slate-400 mt-2 font-light max-w-sm">
+               Live atmospheric telemetry synchronized via satellite-uplink.
+            </p>
+          </div>
+          
+          <div className="bg-black/40 px-6 py-4 rounded-[2rem] border border-white/5 flex items-center gap-5 group hover:border-cyan-500/20 transition-all">
+            <div className="relative">
+               <div className="w-3 h-3 rounded-full animate-pulse shadow-[0_0_15px_currentColor]" style={{ color: aqiConfig.color, background: aqiConfig.color }}></div>
+            </div>
+            <div>
+               <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-black flex items-center gap-2 mb-0.5">
+                 <MapPin size={12} className="text-cyan-400" /> Active Registry
+               </div>
+               <div className="text-sm font-bold text-white group-hover:text-cyan-400 transition-colors uppercase tracking-tight">{location}</div>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1 space-y-6">
-            <div className="glass-card p-8 rounded-[2rem] text-center border-white/5 relative overflow-hidden group">
-               <div className="absolute inset-0 bg-gradient-to-br from-accent-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <img src={current.condition.icon} alt={current.condition.text} className="w-24 h-24 mx-auto drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
-              <div className="text-6xl font-display font-black text-white">{Math.round(current.temp_c)}°C</div>
-              <div className="text-accent-400 font-bold mt-2 uppercase tracking-widest text-sm">{current.condition.text}</div>
-              
-              <div className="mt-8 grid grid-cols-2 gap-3">
-                 <div className="bg-black/20 p-4 rounded-2xl border border-white/5">
-                    <Droplets className="mx-auto mb-2 text-blue-400" size={18} />
-                    <div className="text-lg font-bold">{current.humidity}%</div>
-                    <div className="text-[10px] text-slate-500 font-black">Humidity</div>
-                 </div>
-                 <div className="bg-black/20 p-4 rounded-2xl border border-white/5">
-                    <Wind className="mx-auto mb-2 text-vignan-300" size={18} />
-                    <div className="text-lg font-bold">{current.wind_kph} <span className="text-[10px]">km/h</span></div>
-                    <div className="text-[10px] text-slate-500 font-black">Wind</div>
-                 </div>
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+          
+          {/* Weather Details (Left) */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="glass-card p-10 rounded-[2.5rem] text-center border-white/10 relative overflow-hidden group">
+               {/* Internal HUD bars */}
+               <div className="absolute top-0 left-12 right-12 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+               
+               <div className="relative z-10">
+                  <motion.img 
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    src={current.condition.icon} 
+                    alt={current.condition.text} 
+                    className="w-28 h-28 mx-auto drop-shadow-[0_0_25px_rgba(255,255,255,0.3)] filter contrast-125" 
+                  />
+                  <div className="text-7xl font-display font-black text-white mt-4 tabular-nums tracking-tighter">{Math.round(current.temp_c)}<span className="text-4xl text-cyan-500/60 leading-none">°</span></div>
+                  <div className="text-cyan-400 font-bold mt-2 uppercase tracking-[0.25em] text-[10px]">{current.condition.text}</div>
+                  
+                  <div className="mt-10 grid grid-cols-2 gap-4">
+                     <div className="bg-black/60 p-5 rounded-3xl border border-white/5">
+                        <Droplets className="mx-auto mb-2 text-blue-400" size={20} />
+                        <div className="text-xl font-display font-black text-white">{current.humidity}<span className="text-xs text-slate-500">%</span></div>
+                        <div className="text-[9px] text-slate-600 font-black uppercase tracking-widest mt-1">Humidity</div>
+                     </div>
+                     <div className="bg-black/60 p-5 rounded-3xl border border-white/5">
+                        <Wind className="mx-auto mb-2 text-violet-400" size={20} />
+                        <div className="text-xl font-display font-black text-white">{current.wind_kph}<span className="text-[9px] text-slate-500 ml-1">KPH</span></div>
+                        <div className="text-[9px] text-slate-600 font-black uppercase tracking-widest mt-1">Velocity</div>
+                     </div>
+                  </div>
+               </div>
             </div>
           </div>
 
-          <div className="lg:col-span-2 space-y-6">
-            <div className="glass-card p-8 rounded-[2rem] border-white/5">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-display font-bold text-white">Air Quality Index</h3>
-                <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest ${aqiConfig.bg} ${aqiConfig.color} border border-current/20`}>US-EPA: {usEpa}</span>
-              </div>
+          {/* AQI & Impact (Right) */}
+          <div className="lg:col-span-8 space-y-8">
+            <div className="glass-card p-10 rounded-[2.5rem] border-white/10 relative overflow-hidden">
+               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
+                 <div>
+                    <h3 className="text-2xl font-display font-black text-white tracking-tight uppercase">Atmospheric Quality</h3>
+                    <p className="text-slate-500 text-xs font-light mt-1 uppercase tracking-widest">Real-time Particulate Registry</p>
+                 </div>
+                 <div className={`px-6 py-2 rounded-2xl text-xs font-black uppercase tracking-widest border shadow-2xl transition-all duration-1000`}
+                    style={{ background: `${aqiConfig.color}20`, color: aqiConfig.color, borderColor: `${aqiConfig.color}40`, boxShadow: `0 0 20px ${aqiConfig.glow}` }}>
+                    US-EPA INDEX: {usEpa} • {aqiConfig.label}
+                 </div>
+               </div>
               
-              <div className="relative h-4 bg-slate-800 rounded-full mb-10 flex overflow-hidden">
-                <div className="h-full bg-emerald-500" style={{ width: '20%' }} />
-                <div className="h-full bg-vignan-300" style={{ width: '20%' }} />
-                <div className="h-full bg-amber-500" style={{ width: '20%' }} />
-                <div className="h-full bg-rose-500" style={{ width: '20%' }} />
-                <div className="h-full bg-purple-600" style={{ width: '20%' }} />
-                <div className={`absolute top-1/2 -ml-1 -mt-4 w-2 h-12 bg-white rounded-full border-4 border-slate-900 shadow-xl transition-all duration-1000`} style={{ left: `${(usEpa / 6) * 100}%` }} />
-              </div>
-
-              <div className="flex justify-between text-[10px] text-slate-500 font-black uppercase tracking-widest mb-10">
-                <span>Good</span><span>Moderate</span><span>Unhealthy</span><span>Hazardous</span>
-              </div>
-
-              <div className="space-y-4">
-                <h4 className="text-sm font-display font-bold text-white flex items-center gap-2">
-                  <Navigation size={18} className="text-accent-400" /> Respiratory Impact Assessment
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className={`p-5 rounded-2xl border ${current.temp_c > 35 ? 'bg-red-500/10 border-red-500/20' : 'bg-vignan-900/40 border-vignan-500/10'}`}>
-                    <div className="font-bold text-white text-sm mb-1">Temperature Analysis</div>
-                    <p className="text-xs font-light text-slate-400 leading-relaxed">{current.temp_c}°C suggests {current.temp_c > 30 ? 'potential respiratory stress. Keep hydrated.' : 'normal thermal conditions.'}</p>
+              {/* Progress Slider */}
+               <div className="relative mb-12">
+                  <div className="h-2 w-full bg-white/5 rounded-full flex overflow-hidden p-[1px] border border-white/5">
+                    <div className="h-full bg-emerald-500/60" style={{ width: '20%' }} />
+                    <div className="h-full bg-amber-500/60" style={{ width: '20%' }} />
+                    <div className="h-full bg-rose-500/60" style={{ width: '20%' }} />
+                    <div className="h-full bg-red-600/60" style={{ width: '20%' }} />
+                    <div className="h-full bg-purple-600/60" style={{ width: '20%' }} />
                   </div>
-                  <div className={`p-5 rounded-2xl border ${aqiConfig.bg} border-white/5`}>
-                    <div className="font-bold text-white text-sm mb-1">AQI Advisory</div>
-                    <p className="text-xs font-light text-slate-400 leading-relaxed">{aqiConfig.desc}</p>
-                  </div>
-                </div>
+                  {/* Indicator */}
+                  <motion.div 
+                    initial={{ left: '0%' }}
+                    animate={{ left: `${Math.min((usEpa / 6) * 100, 95)}%` }}
+                    transition={{ duration: 2, ease: "easeOut" }}
+                    className="absolute top-1/2 -mt-6 w-1 h-12 bg-white rounded-full shadow-[0_0_20px_#fff] flex items-center justify-center"
+                  >
+                     <div className="absolute -top-10 bg-white text-black text-[9px] font-black px-2 py-1 rounded shadow-2xl uppercase whitespace-nowrap">
+                        Current Impact
+                     </div>
+                  </motion.div>
+               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div className="space-y-4">
+                    <h4 className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2 px-2">
+                       <Navigation size={14} className="text-cyan-400" /> Integrated Advisory
+                    </h4>
+                    <div className="p-6 rounded-3xl bg-black/40 border border-white/5 space-y-4">
+                       <div className="flex items-start gap-4">
+                          <div className="p-2.5 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                             <Thermometer size={18} />
+                          </div>
+                          <div>
+                             <p className="text-white font-bold text-sm">Thermal Status</p>
+                             <p className="text-slate-500 text-[11px] leading-relaxed mt-1">{current.temp_c}°C identifies {current.temp_c > 30 ? 'potential thermal respiratory stress. Hyper-hydration recommended.' : 'optimal thermal conditions for lung function.'}</p>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+
+                 <div className="space-y-4 pt-4 md:pt-0">
+                    <div className="p-6 rounded-3xl border h-full flex flex-col justify-center" style={{ background: `${aqiConfig.color}08`, borderColor: `${aqiConfig.color}20` }}>
+                       <div className="flex items-start gap-4">
+                          <div className="p-2.5 rounded-xl border" style={{ background: `${aqiConfig.color}15`, color: aqiConfig.color, borderColor: `${aqiConfig.color}30` }}>
+                             <AlertCircle size={18} />
+                          </div>
+                          <div>
+                             <p className="text-white font-bold text-sm">AQI Pathological Note</p>
+                             <p className="text-slate-500 text-[11px] leading-relaxed mt-1 font-light italic">{aqiConfig.desc}</p>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
               </div>
             </div>
             
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                {[
-                 { label: 'PM2.5', val: Math.round(aqi.pm2_5), unit: 'µg/m³' },
-                 { label: 'CO', val: Math.round(aqi.co), unit: 'µg/m³' },
-                 { label: 'NO₂', val: Math.round(aqi.no2), unit: 'µg/m³' }
+                 { label: 'PM2.5', val: Math.round(aqi.pm2_5), unit: 'µg/m³', icon: Activity, color: 'text-rose-400' },
+                 { label: 'Ozone', val: Math.round(aqi.o3), unit: 'ppb', icon: Zap, color: 'text-violet-400' },
+                 { label: 'Carbon', val: Math.round(aqi.co), unit: 'µg/m³', icon: Flame, color: 'text-amber-400' },
+                 { label: 'Nitrogen', val: Math.round(aqi.no2), unit: 'µg/m³', icon: Cloud, color: 'text-cyan-400' }
                ].map((p, i) => (
-                 <div key={i} className="bg-black/20 p-4 rounded-2xl border border-white/5 text-center">
-                    <div className="text-lg font-bold text-white">{p.val}</div>
-                    <div className="text-[9px] text-slate-500 font-black uppercase">{p.label} <span className="lowercase font-normal">({p.unit})</span></div>
+                 <div key={i} className="glass-card p-5 rounded-[1.5rem] border-white/5 text-center group hover:border-white/20 transition-all">
+                    <div className={`p-2 rounded-lg bg-white/5 w-fit mx-auto mb-3 ${p.color} transition-transform group-hover:scale-110`}>
+                       <p.icon size={16} />
+                    </div>
+                    <div className="text-2xl font-display font-black text-white tabular-nums">{p.val}</div>
+                    <div className="text-[8px] text-slate-500 font-mono font-bold uppercase tracking-widest mt-1">
+                       {p.label} <span className="text-[10px] lowercase font-normal opacity-40">{p.unit}</span>
+                    </div>
                  </div>
                ))}
             </div>
           </div>
         </div>
+      </motion.div>
+
+      {/* Footer Disclaimer */}
+      <div className="max-w-3xl mx-auto text-center px-4 opacity-40">
+         <p className="text-[10px] font-mono text-slate-600 uppercase tracking-widest leading-relaxed">
+            Data sourced via WeatherAPI Hyper-local Network. Environmental advisory generated by Bio-Sync Neural Engine • v2.4 
+         </p>
       </div>
     </div>
   );
 };
 
 export default WeatherAQI;
+
+function Flame(props) {
+  return (
+    <svg 
+      {...props}
+      xmlns="http://www.w3.org/2000/svg" 
+      width="24" 
+      height="24" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+    >
+      <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.444-4.58 1-6 .25 1.5 1 2.5 2 3.5 1 1 2 2 2 3.5a2.5 2.5 0 0 1-5 0Z" />
+      <path d="M12 22c5.523 0 10-4.477 10-10 0-1.22-.218-2.383-.615-3.458C20.471 6.11 17.463 4 14 4c-1.12 0-2.179.245-3.125.688C10.144 5.378 9 7.054 9 9c0 1.105.448 2 1 2s1 .895 1 2-1 2-2 2-2-.895-2-2c0-2.22 1.355-4.125 3.315-4.915C9.253 10.052 8 12.38 8 15c0 3.866 3.134 7 7 7Z" />
+    </svg>
+  );
+}

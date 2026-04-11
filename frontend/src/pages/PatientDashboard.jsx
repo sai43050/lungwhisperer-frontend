@@ -1,22 +1,82 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { simulateVitals, getVitalsHistory, sendAIChatMessage } from '../api';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Heart, Activity, Wind, AlertTriangle, ShieldCheck, MessageCircle, Send, X } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { Heart, Activity, Wind, AlertTriangle, ShieldCheck, MessageCircle, Send, X, Zap, TrendingUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const VitalsCard = ({ title, value, unit, icon: Icon, colorClass, statusClass }) => (
-  <div className={`glass-card p-6 rounded-2xl border ${statusClass} flex items-center justify-between transition-all duration-300 transform hover:-translate-y-1`}>
-    <div>
-      <p className="text-slate-400 text-sm font-medium mb-1">{title}</p>
-      <div className="flex items-baseline gap-1">
-        <h3 className="text-3xl font-bold text-white tracking-tight">{value}</h3>
-        <span className="text-slate-400 font-medium text-xs uppercase">{unit}</span>
+const VitalsCard = ({ title, value, unit, icon: Icon, accentColor, glowColor, borderColor, status }) => {
+  const isAlert = status === 'alert';
+  return (
+    <motion.div
+      whileHover={{ y: -4 }}
+      className="relative p-6 rounded-2xl overflow-hidden"
+      style={{
+        background: isAlert
+          ? 'linear-gradient(135deg, rgba(251,113,133,0.08) 0%, rgba(13,26,45,0.5) 100%)'
+          : 'linear-gradient(135deg, rgba(13,26,45,0.6) 0%, rgba(7,13,26,0.5) 100%)',
+        border: `1px solid ${isAlert ? 'rgba(251,113,133,0.3)' : borderColor}`,
+        backdropFilter: 'blur(20px)',
+        boxShadow: isAlert
+          ? '0 0 25px rgba(251,113,133,0.2)'
+          : `0 0 25px ${glowColor}`,
+        transition: 'all 0.35s cubic-bezier(0.4,0,0.2,1)',
+      }}
+    >
+      {/* Top accent line */}
+      <div className="absolute top-0 left-0 right-0 h-px"
+        style={{ background: `linear-gradient(90deg, transparent, ${accentColor}, transparent)` }} />
+
+      {/* Background icon */}
+      <div className="absolute -right-3 -bottom-3 opacity-5">
+        <Icon size={80} />
       </div>
-    </div>
-    <div className={`p-4 rounded-xl backdrop-blur-md ${colorClass}`}>
-      <Icon className="w-8 h-8" />
-    </div>
-  </div>
-);
+
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-slate-500 text-xs font-mono font-semibold mb-2 uppercase tracking-widest">{title}</p>
+          <div className="flex items-baseline gap-1">
+            <span className="text-4xl font-display font-black text-white">{value}</span>
+            <span className="text-slate-500 text-xs font-mono uppercase ml-1">{unit}</span>
+          </div>
+        </div>
+        <div
+          className="p-3 rounded-xl flex-shrink-0"
+          style={{
+            background: `rgba(${accentColor.match(/\d+/g)?.slice(0,3).join(',')}, 0.12)`,
+            border: `1px solid ${borderColor}`,
+          }}
+        >
+          <Icon className="w-5 h-5" style={{ color: accentColor }} />
+        </div>
+      </div>
+
+      {isAlert && (
+        <div className="mt-3 flex items-center gap-1.5 text-rose-400 text-xs font-semibold">
+          <AlertTriangle size={12} />
+          <span>Alert threshold exceeded</span>
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
+const CustomTooltip = ({ active, payload, label, color }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="px-3 py-2 rounded-xl text-xs font-mono"
+        style={{
+          background: 'rgba(3,7,18,0.95)',
+          border: `1px solid ${color}40`,
+          backdropFilter: 'blur(12px)',
+        }}
+      >
+        <p className="text-slate-500 mb-1">{label}</p>
+        <p className="font-bold" style={{ color }}>{payload[0]?.value}</p>
+      </div>
+    );
+  }
+  return null;
+};
 
 const PatientDashboard = ({ user }) => {
   const [vitals, setVitals] = useState({ spo2: 98, respiratory_rate: 16, heart_rate: 75 });
@@ -26,46 +86,41 @@ const PatientDashboard = ({ user }) => {
   const [isSimulating, setIsSimulating] = useState(false);
   const intervalRef = useRef(null);
 
-  // Chatbot state
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState([{ sender: 'ai', text: `Hello ${user?.username || 'there'}! I am RespiraBot. How can I help you regarding your vitals today?` }]);
+  const [chatMessages, setChatMessages] = useState([{
+    sender: 'ai',
+    text: `Hello ${user?.full_name || user?.username || 'there'}! I am RespiraBot, your AI health assistant. How can I help you today?`
+  }]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef(null);
 
-  // Initial Fetch
   const fetchHistory = async () => {
     try {
       const data = await getVitalsHistory(user.user_id);
       if (Array.isArray(data)) {
-        // Format for recharts
         const formatted = data.map(d => ({
-          time: new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          time: new Date(d.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           spo2: d.spo2,
           heart_rate: d.heart_rate,
           respiratory_rate: d.respiratory_rate
-        })).slice(-15); // Show last 15 points
+        })).slice(-15);
         setHistory(formatted);
       }
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) { console.error(err); }
   };
 
+  useEffect(() => { fetchHistory(); }, []);
+
   useEffect(() => {
-    fetchHistory();
-  }, []);
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
 
   const generateRandomVitals = (prev) => {
-    // Add small random noise
     const noise = (val, maxDelta, min, max) => {
       let next = val + (Math.random() * maxDelta * 2 - maxDelta);
-      if (next < min) next = min;
-      if (next > max) next = max;
-      return parseFloat(next.toFixed(1));
+      return parseFloat(Math.min(Math.max(next, min), max).toFixed(1));
     };
-
-    // To simulate an emergency, maybe clicking a button forces bad vitals?
-    // For now, normal variation.
     return {
       spo2: noise(prev.spo2, 1, 85, 100),
       heart_rate: noise(prev.heart_rate, 3, 50, 140),
@@ -84,218 +139,331 @@ const PatientDashboard = ({ user }) => {
           return payload;
         });
       }
-      
       const res = await simulateVitals(user.user_id, payload.spo2, payload.respiratory_rate, payload.heart_rate);
       setStatus(res.health_status);
       setRecommendation(res.recommendation);
       setVitals(payload);
-      fetchHistory(); // Refresh graph
-    } catch (err) {
-      console.error("Simulation error", err);
-    }
+      fetchHistory();
+    } catch (err) { console.error("Simulation error", err); }
   };
 
   const toggleSimulation = () => {
-    if (isSimulating) {
-      clearInterval(intervalRef.current);
-    } else {
-      intervalRef.current = setInterval(() => triggerVitalsUpdate(), 4000);
-    }
+    if (isSimulating) clearInterval(intervalRef.current);
+    else intervalRef.current = setInterval(() => triggerVitalsUpdate(), 4000);
     setIsSimulating(!isSimulating);
   };
 
-  const forceEmergency = () => {
-    const critical = { spo2: 88, heart_rate: 125, respiratory_rate: 32 };
-    triggerVitalsUpdate(critical);
-  };
+  const forceEmergency = () => triggerVitalsUpdate({ spo2: 88, heart_rate: 125, respiratory_rate: 32 });
 
   const handleChatSubmit = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
-    
     const newMsg = { sender: 'user', text: chatInput };
     setChatMessages(prev => [...prev, newMsg]);
     setChatInput('');
     setChatLoading(true);
-    
     try {
       const data = await sendAIChatMessage(newMsg.text);
       setChatMessages(prev => [...prev, { sender: 'ai', text: data.reply }]);
-    } catch (error) {
-      setChatMessages(prev => [...prev, { sender: 'ai', text: "Sorry, my brain went offline momentarily. Try again." }]);
-    } finally {
-      setChatLoading(false);
-    }
+    } catch {
+      setChatMessages(prev => [...prev, { sender: 'ai', text: "Sorry, my connection dropped. Try again." }]);
+    } finally { setChatLoading(false); }
   };
 
-  // Status mapping
   const statusConfig = {
-    Normal: { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500/30', icon: ShieldCheck },
-    Warning: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30', icon: AlertTriangle },
-    Critical: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30', icon: AlertTriangle }
+    Normal: {
+      bg: 'rgba(52,211,153,0.08)', border: 'rgba(52,211,153,0.3)',
+      color: '#34d399', label: 'All Systems Normal', icon: ShieldCheck, glow: 'rgba(52,211,153,0.2)'
+    },
+    Warning: {
+      bg: 'rgba(251,191,36,0.08)', border: 'rgba(251,191,36,0.3)',
+      color: '#fbbf24', label: 'Warning Detected', icon: AlertTriangle, glow: 'rgba(251,191,36,0.2)'
+    },
+    Critical: {
+      bg: 'rgba(251,113,133,0.08)', border: 'rgba(251,113,133,0.3)',
+      color: '#fb7185', label: 'Critical Alert', icon: AlertTriangle, glow: 'rgba(251,113,133,0.2)'
+    },
   };
-  
-  const currentConfig = statusConfig[status] || statusConfig.Normal;
-  const StatusIcon = currentConfig.icon;
+  const cfg = statusConfig[status] || statusConfig.Normal;
+  const StatusIcon = cfg.icon;
 
   return (
-    <div className="space-y-6 relative z-10 pt-4">
-      <div className="flex justify-between items-center glass-panel p-6 rounded-3xl border border-vignan-500/20">
-        <div>
-          <h1 className="text-3xl font-display font-bold text-white tracking-wide">
-            Welcome back, <span className="text-accent-400 capitalize">{user?.username || 'Patient'}</span>
-          </h1>
-          <div className="flex items-center gap-2 text-vignan-200 text-sm font-light mt-1">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-500"></span>
-            </span>
-            <span>Synchronized with Clinical Inference Matrix</span>
+    <div className="space-y-5 relative z-10 pt-4">
+
+      {/* Header */}
+      <div
+        className="p-6 rounded-3xl relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, rgba(13,26,45,0.7) 0%, rgba(7,13,26,0.6) 100%)',
+          border: '1px solid rgba(255,255,255,0.07)',
+          backdropFilter: 'blur(24px)',
+        }}
+      >
+        {/* Accent line */}
+        <div className="absolute top-0 left-0 right-0 h-px"
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(6,182,212,0.6), rgba(139,92,246,0.6), transparent)' }} />
+
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-display font-black text-white tracking-tight">
+              Welcome back,{' '}
+              <span className="text-gradient capitalize">{user?.full_name || user?.username || 'Patient'}</span>
+            </h1>
+            <div className="flex items-center gap-2 text-slate-500 text-xs font-mono mt-1.5">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400" />
+              </span>
+              <span>Real-time medical analysis active</span>
+            </div>
           </div>
-        </div>
-        <div className="flex gap-3">
-          <button 
-            onClick={forceEmergency}
-            className="px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-semibold rounded-xl transition-colors border border-red-500/30 backdrop-blur-md"
-          >
-            Force Event
-          </button>
-          <button 
-            onClick={toggleSimulation}
-            className={`px-5 py-2.5 text-white text-sm font-semibold rounded-xl transition-all duration-300 ${isSimulating ? 'bg-red-500/80 hover:bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'bg-gradient-to-r from-accent-500 to-vignan-600 hover:from-accent-400 hover:to-vignan-500 shadow-[0_0_15px_rgba(0,154,228,0.4)]'}`}
-          >
-            {isSimulating ? 'Stop IoT Simulator' : 'Start IoT Simulator'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={forceEmergency}
+              className="px-4 py-2 text-xs font-bold rounded-xl transition-all duration-200"
+              style={{ background: 'rgba(251,113,133,0.1)', border: '1px solid rgba(251,113,133,0.25)', color: '#fb7185' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(251,113,133,0.18)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(251,113,133,0.1)'}
+            >
+              Force Event
+            </button>
+            <button
+              onClick={toggleSimulation}
+              className="px-5 py-2 text-white text-xs font-bold rounded-xl transition-all duration-300"
+              style={{
+                background: isSimulating
+                  ? 'linear-gradient(135deg, rgba(251,113,133,0.6), rgba(251,113,133,0.4))'
+                  : 'linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%)',
+                boxShadow: isSimulating ? '0 0 15px rgba(251,113,133,0.3)' : '0 0 20px rgba(6,182,212,0.35)',
+              }}
+            >
+              {isSimulating ? '⬛ Stop Sim' : '▶ Start Sim'}
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Status Bar */}
-      <div className={`p-5 rounded-2xl flex items-center justify-between border backdrop-blur-md shadow-lg ${currentConfig.bg} ${currentConfig.border} ${currentConfig.text}`}>
+      <motion.div
+        layout
+        className="p-4 rounded-2xl flex items-center justify-between"
+        style={{
+          background: cfg.bg,
+          border: `1px solid ${cfg.border}`,
+          boxShadow: `0 0 20px ${cfg.glow}`,
+          backdropFilter: 'blur(12px)',
+        }}
+      >
         <div className="flex items-center gap-3">
-          <StatusIcon className="w-7 h-7" />
-          <h2 className="font-display font-bold text-xl uppercase tracking-widest">AI Assessment: {status}</h2>
+          <StatusIcon className="w-5 h-5" style={{ color: cfg.color }} />
+          <span className="font-display font-bold text-base uppercase tracking-widest" style={{ color: cfg.color }}>
+            AI Assessment: {cfg.label}
+          </span>
         </div>
-        <div className="font-medium bg-black/20 px-5 py-1.5 rounded-full text-sm border border-white/5">
-          Recommendation: {recommendation}
+        <div className="text-xs font-mono px-3 py-1.5 rounded-full"
+          style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.05)', color: cfg.color }}>
+          {recommendation}
         </div>
+      </motion.div>
+
+      {/* Vitals Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <VitalsCard
+          title="Oxygen Saturation"
+          value={vitals.spo2}
+          unit="%"
+          icon={Activity}
+          accentColor="#22d3ee"
+          glowColor="rgba(6,182,212,0.15)"
+          borderColor="rgba(6,182,212,0.2)"
+          status={vitals.spo2 < 95 ? 'alert' : 'normal'}
+        />
+        <VitalsCard
+          title="Heart Rate"
+          value={Math.round(vitals.heart_rate)}
+          unit="bpm"
+          icon={Heart}
+          accentColor="#fb7185"
+          glowColor="rgba(251,113,133,0.12)"
+          borderColor="rgba(251,113,133,0.18)"
+          status={vitals.heart_rate > 100 || vitals.heart_rate < 50 ? 'alert' : 'normal'}
+        />
+        <VitalsCard
+          title="Respiratory Rate"
+          value={Math.round(vitals.respiratory_rate)}
+          unit="/min"
+          icon={Wind}
+          accentColor="#a78bfa"
+          glowColor="rgba(139,92,246,0.12)"
+          borderColor="rgba(139,92,246,0.18)"
+          status={vitals.respiratory_rate > 24 ? 'alert' : 'normal'}
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <VitalsCard 
-          title="Oxygen Saturation" 
-          value={vitals.spo2} 
-          unit="%" 
-          icon={Activity} 
-          colorClass="bg-accent-500/20 text-accent-400 border border-accent-500/30 shadow-[0_0_15px_rgba(0,154,228,0.3)]" 
-          statusClass={vitals.spo2 < 95 ? 'border-red-500/50 shadow-red-500/30 animate-pulse' : 'border-slate-700/50'} 
-        />
-        <VitalsCard 
-          title="Heart Rate" 
-          value={Math.round(vitals.heart_rate)} 
-          unit="bpm" 
-          icon={Heart} 
-          colorClass="bg-red-500/20 text-red-400 border border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.3)]"
-          statusClass={vitals.heart_rate > 100 || vitals.heart_rate < 50 ? 'border-red-500/50 shadow-red-500/30 animate-pulse' : 'border-slate-700/50'} 
-        />
-        <VitalsCard 
-          title="Respiratory Rate" 
-          value={Math.round(vitals.respiratory_rate)} 
-          unit="bpm" 
-          icon={Wind} 
-          colorClass="bg-vignan-500/30 text-vignan-300 border border-vignan-500/50 shadow-[0_0_15px_rgba(106,141,206,0.3)]" 
-          statusClass={vitals.respiratory_rate > 24 ? 'border-red-500/50 shadow-red-500/30 animate-pulse' : 'border-slate-700/50'}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="glass-card p-6 rounded-3xl">
-          <h3 className="font-display font-bold text-slate-200 mb-4 tracking-wider">SpO2 Trend (%)</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={history}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="time" tick={{fontSize: 12, fill: '#94a3b8'}} />
-                <YAxis domain={['auto', 'auto']} tick={{fontSize: 12, fill: '#94a3b8'}} />
-                <Tooltip contentStyle={{ backgroundColor: 'rgba(15,23,42,0.9)', borderColor: 'rgba(0,154,228,0.5)', borderRadius: '12px', color: '#fff' }} />
-                <Line type="monotone" dataKey="spo2" stroke="#0aa1f2" strokeWidth={3} dot={{ strokeWidth: 2, r: 4 }} activeDot={{ r: 6 }} />
-              </LineChart>
-            </ResponsiveContainer>
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {[
+          { key: 'spo2', label: 'SpO₂ Trend', unit: '%', color: '#22d3ee', domain: [85, 100] },
+          { key: 'heart_rate', label: 'Heart Rate Trend', unit: 'BPM', color: '#fb7185', domain: ['auto', 'auto'] },
+        ].map(chart => (
+          <div
+            key={chart.key}
+            className="p-5 rounded-2xl"
+            style={{
+              background: 'linear-gradient(135deg, rgba(13,26,45,0.6) 0%, rgba(7,13,26,0.5) 100%)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              backdropFilter: 'blur(20px)',
+            }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-display font-bold text-white text-sm tracking-wide">{chart.label}</h3>
+              <span className="text-xs font-mono px-2 py-0.5 rounded-md"
+                style={{ background: `${chart.color}15`, color: chart.color, border: `1px solid ${chart.color}30` }}>
+                {chart.unit}
+              </span>
+            </div>
+            <div className="h-52">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={history}>
+                  <defs>
+                    <linearGradient id={`grad-${chart.key}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={chart.color} stopOpacity={0.25} />
+                      <stop offset="95%" stopColor={chart.color} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.04)" />
+                  <XAxis dataKey="time" tick={{ fontSize: 10, fill: 'rgba(148,163,184,0.5)', fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} />
+                  <YAxis domain={chart.domain} tick={{ fontSize: 10, fill: 'rgba(148,163,184,0.5)', fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} width={32} />
+                  <Tooltip content={<CustomTooltip color={chart.color} />} />
+                  <Area type="monotone" dataKey={chart.key} stroke={chart.color} strokeWidth={2.5}
+                    fill={`url(#grad-${chart.key})`} dot={false} activeDot={{ r: 5, fill: chart.color, strokeWidth: 0 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
-        <div className="glass-card p-6 rounded-3xl">
-          <h3 className="font-display font-bold text-slate-200 mb-4 tracking-wider">Heart Rate Trend (BPM)</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={history}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="time" tick={{fontSize: 12, fill: '#94a3b8'}} />
-                <YAxis domain={['auto', 'auto']} tick={{fontSize: 12, fill: '#94a3b8'}} />
-                <Tooltip contentStyle={{ backgroundColor: 'rgba(15,23,42,0.9)', borderColor: 'rgba(239,68,68,0.5)', borderRadius: '12px', color: '#fff' }} />
-                <Line type="monotone" dataKey="heart_rate" stroke="#ef4444" strokeWidth={3} dot={{ strokeWidth: 2, r: 4 }} activeDot={{ r: 6 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Floating Chatbot Component */}
+      {/* Floating Chatbot */}
       <div className="fixed bottom-6 right-6 z-50">
-        {isChatOpen ? (
-           <div className="glass-panel w-80 sm:w-[400px] rounded-3xl shadow-[0_0_30px_rgba(0,0,0,0.5)] border border-vignan-400/30 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
-             <div className="bg-vignan-800/80 backdrop-blur-xl p-4 flex justify-between items-center text-white border-b border-vignan-600/50">
-               <div className="flex items-center gap-2">
-                  <Activity size={20} className="text-accent-400" />
-                  <h4 className="font-display font-bold tracking-wide">RespiraBot Assistant</h4>
-               </div>
-               <button onClick={() => setIsChatOpen(false)} className="text-slate-400 hover:text-accent-400 p-1 rounded transition-colors"><X size={20} /></button>
-             </div>
-             <div className="h-[350px] overflow-y-auto p-4 bg-slate-900/60 custom-scrollbar space-y-4">
+        <AnimatePresence>
+          {isChatOpen ? (
+            <motion.div
+              key="chat"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ duration: 0.2 }}
+              className="w-80 sm:w-[380px] rounded-3xl flex flex-col overflow-hidden"
+              style={{
+                background: 'linear-gradient(135deg, rgba(10,18,35,0.97), rgba(3,7,18,0.98))',
+                border: '1px solid rgba(6,182,212,0.2)',
+                boxShadow: '0 0 40px rgba(6,182,212,0.15), 0 30px 60px rgba(0,0,0,0.7)',
+                backdropFilter: 'blur(40px)',
+              }}
+            >
+              {/* Chat Header */}
+              <div className="p-4 flex justify-between items-center"
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg" style={{ background: 'rgba(6,182,212,0.15)', border: '1px solid rgba(6,182,212,0.25)' }}>
+                    <Activity size={16} className="text-cyan-400" />
+                  </div>
+                  <div>
+                    <h4 className="font-display font-bold text-white text-sm">RespiraBot</h4>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">AI Active</span>
+                    </div>
+                  </div>
+                </div>
+                <button onClick={() => setIsChatOpen(false)}
+                  className="text-slate-600 hover:text-slate-300 p-1.5 rounded-lg hover:bg-white/5 transition-all">
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Messages */}
+              <div className="h-[320px] overflow-y-auto p-4 custom-scrollbar space-y-3">
                 {chatMessages.map((msg, idx) => (
                   <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                     <div className={`max-w-[80%] p-3.5 rounded-3xl text-sm ${msg.sender === 'user' ? 'bg-gradient-to-r from-accent-500 to-vignan-500 text-white rounded-br-none shadow-[0_0_15px_rgba(0,154,228,0.3)] font-medium' : 'bg-vignan-800/80 border border-vignan-600/50 text-slate-200 rounded-bl-none shadow-md font-light leading-relaxed'}`}>
-                        {msg.text}
-                     </div>
+                    <div
+                      className="max-w-[82%] px-4 py-3 rounded-2xl text-xs leading-relaxed"
+                      style={msg.sender === 'user' ? {
+                        background: 'linear-gradient(135deg, #06b6d4, #8b5cf6)',
+                        color: 'white',
+                        borderBottomRightRadius: '4px',
+                        boxShadow: '0 4px 12px rgba(6,182,212,0.25)',
+                      } : {
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(255,255,255,0.07)',
+                        color: 'rgba(226,232,240,0.9)',
+                        borderBottomLeftRadius: '4px',
+                      }}
+                    >
+                      {msg.text}
+                    </div>
                   </div>
                 ))}
                 {chatLoading && (
-                   <div className="flex justify-start">
-                     <div className="bg-vignan-800/80 border border-vignan-600/50 p-4 rounded-3xl rounded-bl-none flex gap-1.5 items-center">
-                        <span className="w-2 h-2 bg-accent-400 rounded-full animate-bounce"></span>
-                        <span className="w-2 h-2 bg-accent-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></span>
-                        <span className="w-2 h-2 bg-accent-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></span>
-                     </div>
-                   </div>
+                  <div className="flex justify-start">
+                    <div className="px-4 py-3 rounded-2xl flex gap-1.5 items-center"
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderBottomLeftRadius: '4px' }}>
+                      {[0, 0.2, 0.4].map((d, i) => (
+                        <span key={i} className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: `${d}s` }} />
+                      ))}
+                    </div>
+                  </div>
                 )}
-             </div>
-             <form onSubmit={handleChatSubmit} className="p-4 bg-vignan-900/90 backdrop-blur-xl border-t border-vignan-700/50 flex gap-3">
-                <input 
-                  type="text" 
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Input */}
+              <form
+                onSubmit={handleChatSubmit}
+                className="p-3 flex gap-2"
+                style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                <input
+                  type="text"
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  className="flex-grow bg-slate-900/80 border border-vignan-600/50 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-1 focus:ring-accent-500 placeholder-vignan-400 shadow-inner transition-all"
-                  placeholder="Query telemetry data..."
+                  className="input-dark flex-grow px-4 py-2.5 text-xs"
+                  placeholder="Ask a health question..."
                   disabled={chatLoading}
                 />
-                <button 
+                <button
                   type="submit"
                   disabled={chatLoading || !chatInput.trim()}
-                  className="bg-gradient-to-r from-accent-500 to-vignan-500 text-white p-3 rounded-xl hover:from-accent-400 hover:to-vignan-400 transition-all disabled:opacity-50 shadow-[0_0_15px_rgba(0,154,228,0.3)] hover:shadow-[0_0_20px_rgba(0,154,228,0.6)]"
+                  className="p-2.5 rounded-xl disabled:opacity-40 transition-all"
+                  style={{ background: 'linear-gradient(135deg, #06b6d4, #8b5cf6)', boxShadow: '0 0 15px rgba(6,182,212,0.3)' }}
                 >
-                  <Send size={18} />
+                  <Send size={15} className="text-white" />
                 </button>
-             </form>
-           </div>
-        ) : (
-           <button 
-             onClick={() => setIsChatOpen(true)}
-             className="bg-gradient-to-tr from-accent-500 to-vignan-600 text-white p-4 sm:px-6 sm:py-4 rounded-full shadow-[0_0_20px_rgba(0,154,228,0.5)] hover:shadow-[0_0_30px_rgba(0,154,228,0.7)] hover:scale-105 transition-all flex items-center justify-center gap-3 animate-float"
-           >
-             <MessageCircle size={26} />
-             <span className="font-display font-bold text-lg hidden sm:inline tracking-wider">Respira AI</span>
-           </button>
-        )}
+              </form>
+            </motion.div>
+          ) : (
+            <motion.button
+              key="fab"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setIsChatOpen(true)}
+              className="flex items-center justify-center gap-3 text-white rounded-full shadow-2xl"
+              style={{
+                background: 'linear-gradient(135deg, #06b6d4, #8b5cf6)',
+                boxShadow: '0 0 30px rgba(6,182,212,0.45)',
+                padding: '1rem 1.5rem',
+              }}
+            >
+              <MessageCircle size={22} />
+              <span className="font-display font-bold text-sm hidden sm:inline">RespiraBot</span>
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
-
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Pill, Clock, Plus, CheckCircle2, AlertCircle, Calendar, Trash2 } from 'lucide-react';
+import { Pill, Clock, Plus, CheckCircle2, AlertCircle, Calendar, Trash2, Zap, LayoutDashboard, Activity } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Medications = () => {
   const [meds, setMeds] = useState([
@@ -28,129 +29,232 @@ const Medications = () => {
   const adherence = Math.round((meds.filter(m => m.taken).length / meds.length) * 100) || 0;
 
   return (
-    <div className="space-y-6 pt-4 max-w-4xl mx-auto pb-24 relative z-10">
-      <div className="glass-panel p-8 rounded-[2.5rem] border border-vignan-500/20 shadow-2xl">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+    <div className="space-y-6 pt-6 max-w-5xl mx-auto pb-24 relative z-10 px-4">
+      {/* Background Decor */}
+      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-violet-500/5 blur-[100px] rounded-full pointer-events-none" />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-panel p-8 sm:p-12 rounded-[3.5rem] border-white/5 shadow-2xl relative overflow-hidden"
+      >
+        {/* Top Shimmer */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/50 to-transparent" />
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-4xl font-display font-black text-white tracking-tight">Medication <span className="text-accent-400">Schedule</span></h1>
-            <p className="text-vignan-200 text-sm font-light mt-1 uppercase tracking-widest opacity-80">Reminders & Adherence Tracking</p>
+            <div className="flex items-center gap-2 mb-2">
+               <div className="p-1.5 rounded-lg bg-violet-500/10 border border-violet-500/20">
+                  <Pill size={14} className="text-violet-400" />
+               </div>
+               <span className="text-[10px] font-mono font-bold text-violet-400 uppercase tracking-widest">Medical Compliance Protocol</span>
+            </div>
+            <h1 className="text-4xl font-display font-black text-white tracking-tight">Health <span className="text-gradient-cyan">Timeline</span></h1>
+            <p className="text-slate-400 mt-2 font-light max-w-sm">
+               Digital medication synchronization and adherence monitoring.
+            </p>
           </div>
           <button 
             onClick={() => setShowAdd(!showAdd)}
-            className="flex items-center gap-2 px-6 py-3 bg-accent-500 hover:bg-accent-400 text-white font-bold rounded-2xl shadow-lg shadow-accent-900/40 transition-all"
+            className="flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-violet-950/40 transition-all active:scale-95"
           >
-            <Plus size={20} /> Add Medication
+            <Plus size={18} /> Add New Entry
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-4">
-            {showAdd && (
-              <div className="glass-card p-6 rounded-[2rem] border-accent-500/30 mb-6 bg-vignan-900/60 animate-in fade-in zoom-in duration-300">
-                <h3 className="text-lg font-display font-bold text-white mb-4">New Reminder</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input 
-                    type="text" 
-                    placeholder="Medication Name" 
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    className="bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:ring-1 focus:ring-accent-400"
-                  />
-                  <input 
-                    type="text" 
-                    placeholder="Dosage (e.g. 2 puffs)" 
-                    value={newDose}
-                    onChange={(e) => setNewDose(e.target.value)}
-                    className="bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:ring-1 focus:ring-accent-400"
-                  />
-                  <input 
-                    type="time" 
-                    value={newTime}
-                    onChange={(e) => setNewTime(e.target.value)}
-                    className="bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:ring-1 focus:ring-accent-400"
-                  />
-                  <button 
-                    onClick={addMed}
-                    className="bg-accent-500 text-white font-bold rounded-xl py-3 hover:bg-accent-400 transition-all"
-                  >
-                    Save Reminder
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-4">
-              {meds.map((med) => (
-                <div 
-                  key={med.id}
-                  className={`glass-card p-6 rounded-[2rem] border-white/5 flex items-center gap-6 group transition-all ${med.taken ? 'opacity-60 bg-white/5' : 'hover:border-accent-500/30'}`}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+          
+          <div className="lg:col-span-8 space-y-6">
+            <AnimatePresence>
+              {showAdd && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0, y: -20 }}
+                  animate={{ opacity: 1, height: 'auto', y: 0 }}
+                  exit={{ opacity: 0, height: 0, y: -20 }}
+                  className="glass-card p-8 rounded-[2.5rem] border-violet-500/30 mb-8 bg-violet-500/5 backdrop-blur-3xl overflow-hidden"
                 >
-                  <div className={`p-4 rounded-2xl ${med.taken ? 'bg-emerald-500/20 text-emerald-400' : 'bg-accent-500/20 text-accent-400 shadow-[0_0_15px_rgba(0,154,228,0.2)]'}`}>
-                    <Pill size={24} />
+                  <div className="flex justify-between items-center mb-6">
+                     <h3 className="text-xl font-display font-black text-white">Create Reminder</h3>
+                     <button onClick={() => setShowAdd(false)} className="text-slate-500 hover:text-white transition-colors">
+                        <AlertCircle size={18} className="rotate-45" />
+                     </button>
                   </div>
-                  <div className="flex-grow">
-                     <h4 className={`text-lg font-display font-bold ${med.taken ? 'text-slate-400' : 'text-white'}`}>{med.name}</h4>
-                     <p className="text-xs text-slate-500 font-medium">{med.dose} • {med.time}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-2">
+                       <label className="text-[9px] font-mono font-black text-slate-500 uppercase tracking-widest ml-1">Composition Name</label>
+                       <input 
+                        type="text" 
+                        placeholder="e.g. Salbutamol Inhaler" 
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-violet-500/40 outline-none transition-all placeholder:text-slate-600"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[9px] font-mono font-black text-slate-500 uppercase tracking-widest ml-1">Clinical Dosage</label>
+                       <input 
+                        type="text" 
+                        placeholder="e.g. 500 MG / 2 Puffs" 
+                        value={newDose}
+                        onChange={(e) => setNewDose(e.target.value)}
+                        className="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:border-violet-500/40 outline-none transition-all placeholder:text-slate-600"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[9px] font-mono font-black text-slate-500 uppercase tracking-widest ml-1">Standard Interval</label>
+                       <div className="relative">
+                          <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                          <input 
+                            type="time" 
+                            value={newTime}
+                            onChange={(e) => setNewTime(e.target.value)}
+                            className="w-full bg-black/40 border border-white/10 rounded-2xl pl-12 pr-5 py-4 text-sm text-white focus:border-violet-500/40 outline-none transition-all"
+                          />
+                       </div>
+                    </div>
+                    <div className="flex items-end">
+                      <button 
+                        onClick={addMed}
+                        className="w-full bg-white text-violet-950 font-black text-xs uppercase tracking-[0.2em] rounded-2xl py-4.5 hover:bg-slate-200 transition-all shadow-xl shadow-white/5 active:scale-[0.98]"
+                      >
+                        Synchronize Entry
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button 
-                      onClick={() => toggleMed(med.id)}
-                      className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${med.taken ? 'bg-emerald-500 text-white' : 'bg-vignan-800 text-slate-400 hover:text-white hover:bg-vignan-700'}`}
-                    >
-                      {med.taken ? 'Taken' : 'Mark Taken'}
-                    </button>
-                    <button onClick={() => deleteMed(med.id)} className="p-2 text-slate-600 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100">
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="space-y-5">
+              <AnimatePresence>
+                {meds.map((med, i) => (
+                  <motion.div 
+                    key={med.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    className={`glass-card p-6 rounded-[2rem] border-white/10 flex items-center gap-6 group transition-all relative overflow-hidden ${med.taken ? 'opacity-40 grayscale-[0.5]' : 'hover:border-violet-500/40 hover:bg-white/5'}`}
+                  >
+                    {/* Status accent */}
+                    <div className={`absolute left-0 top-0 bottom-0 w-1 ${med.taken ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+
+                    <div className={`p-5 rounded-2xl transition-all duration-700 ${med.taken ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 text-rose-400 shadow-[0_0_20px_rgba(251,113,133,0.1)] group-hover:bg-rose-500 group-hover:text-white transition-all group-hover:scale-105'}`}>
+                      <Pill size={24} />
+                    </div>
+                    <div className="flex-grow">
+                       <div className="flex items-center gap-3 mb-1">
+                          <h4 className={`text-xl font-display font-black tracking-tight ${med.taken ? 'text-slate-400' : 'text-white'}`}>{med.name}</h4>
+                          {med.taken && <CheckCircle2 size={16} className="text-emerald-500" />}
+                       </div>
+                       <div className="flex items-center gap-3">
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest px-2 py-0.5 rounded-lg bg-black/40 border border-white/5">{med.dose}</span>
+                          <span className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1.5"><Clock size={12} className="text-slate-600" /> {med.time}</span>
+                       </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <button 
+                        onClick={() => toggleMed(med.id)}
+                        className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${
+                          med.taken 
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 shadow-none' 
+                            : 'bg-white text-black hover:bg-slate-200 shadow-white/10'
+                        }`}
+                      >
+                        {med.taken ? 'Recorded' : 'Signal Taken'}
+                      </button>
+                      <button onClick={() => deleteMed(med.id)} className="p-2.5 rounded-xl bg-white/5 border border-transparent hover:border-rose-500/30 hover:text-rose-400 transition-all opacity-0 group-hover:opacity-100">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+              
+              {meds.length === 0 && (
+                <div className="text-center py-20 bg-black/20 rounded-[3rem] border border-white/5 border-dashed">
+                   <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-6">
+                      <LayoutDashboard className="text-slate-700" size={32} />
+                   </div>
+                   <h3 className="text-white font-bold mb-1">Timeline Empty</h3>
+                   <p className="text-slate-600 text-xs font-light">No medications synchronized for today.</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
-          <div className="lg:col-span-1 space-y-6">
-            <div className="glass-card p-8 rounded-[2rem] border-white/5 text-center">
-              <div className="relative w-32 h-32 mx-auto mb-6">
-                 {/* Progress Ring */}
-                 <svg className="w-full h-full" viewBox="0 0 100 100">
+          <div className="lg:col-span-4 space-y-6">
+            <div className="glass-card p-10 rounded-[3rem] border-white/5 text-center relative overflow-hidden group">
+               <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent pointer-events-none" />
+               <div className="relative w-40 h-40 mx-auto mb-8">
+                  <svg className="w-full h-full" viewBox="0 0 100 100">
                     <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
-                    <circle 
-                      cx="50" cy="50" r="45" fill="none" stroke="var(--accent-400)" strokeWidth="8" 
-                      strokeDasharray={`${adherence * 2.82} 282`} 
+                    <motion.circle 
+                      initial={{ strokeDasharray: "0 282" }}
+                      animate={{ strokeDasharray: `${adherence * 2.82} 282` }}
+                      transition={{ duration: 1.5, ease: "easeOut" }}
+                      cx="50" cy="50" r="45" fill="none" stroke="url(#cyan-grad)" strokeWidth="10" 
                       strokeLinecap="round"
-                      className="transition-all duration-1000 ease-out"
-                      style={{ stroke: '#0aa1f2', transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }}
+                      style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }}
                     />
-                 </svg>
-                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <div className="text-3xl font-display font-black text-white">{adherence}%</div>
-                    <div className="text-[8px] text-slate-500 uppercase tracking-widest font-black">Adherence</div>
-                 </div>
-              </div>
-              <p className="text-xs text-slate-400 font-light leading-relaxed">You are maintaining a {adherence >= 80 ? 'great' : 'fair'} adherence rate this week. Keep it up!</p>
+                    <defs>
+                       <linearGradient id="cyan-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#06b6d4" />
+                          <stop offset="100%" stopColor="#8b5cf6" />
+                       </linearGradient>
+                    </defs>
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <div className="text-5xl font-display font-black text-white">{adherence}<span className="text-xl opacity-30">%</span></div>
+                    <div className="text-[9px] text-slate-500 uppercase tracking-[0.2em] font-black mt-1">Compliance</div>
+                  </div>
+               </div>
+               <p className="text-xs text-slate-400 font-light leading-relaxed max-w-[200px] mx-auto">
+                 {adherence >= 80 
+                  ? "Optimal adherence profile. Biological stability reached." 
+                  : "Critical adherence deficit. Immediate action recommended."}
+               </p>
+               <div className="mt-8 flex justify-center">
+                  <div className="px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-[9px] font-black text-cyan-400 uppercase tracking-widest">
+                     Verified Data
+                  </div>
+               </div>
             </div>
 
-            <div className="glass-card p-6 rounded-[2rem] border-white/5">
-              <h4 className="text-xs font-display font-bold text-white uppercase tracking-widest mb-4 flex items-center gap-2">
-                <Calendar size={14} className="text-accent-400" /> Weekly Insights
+            <div className="glass-card p-8 rounded-[3rem] border-white/5">
+              <h4 className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-[0.3em] mb-8 flex items-center gap-2">
+                <Calendar size={14} className="text-violet-400" /> Compliance Trend
               </h4>
-              <div className="flex gap-2 items-end h-24 pt-4 px-2">
+              <div className="flex gap-2.5 items-end h-32 pt-4 px-1">
                 {[80, 100, 90, 60, 100, 40, 20].map((h, i) => (
-                  <div key={i} className="flex-grow flex flex-col items-center gap-2">
-                    <div className="w-full bg-accent-500/10 rounded-t-lg relative group">
-                      <div 
-                        className="bg-accent-500 rounded-t-lg transition-all duration-1000" 
-                        style={{ height: `${h}%`, opacity: h / 100 }}
+                  <div key={i} className="flex-grow flex flex-col items-center gap-3">
+                    <div className="w-full bg-white/5 rounded-t-xl relative group">
+                      <motion.div 
+                        initial={{ height: 0 }}
+                        animate={{ height: `${h}%` }}
+                        transition={{ duration: 1, delay: i * 0.1 }}
+                        className="rounded-t-xl transition-all duration-300" 
+                        style={{ background: 'linear-gradient(to bottom, #8b5cf6, rgba(139,92,246,0.3))', opacity: 0.3 + (h/100) * 0.7 }}
                       />
+                      <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[8px] font-black text-white">{h}%</div>
                     </div>
-                    <span className="text-[8px] text-slate-600 font-black">MTWTFSS'[i]</span>
+                    <span className="text-[8px] text-slate-700 font-black uppercase">{'MTWTFSS'[i]}</span>
                   </div>
                 ))}
               </div>
             </div>
+            
+            <div className="p-6 rounded-[2rem] bg-indigo-600/10 border border-indigo-500/20 flex flex-col gap-4">
+               <div className="flex items-center gap-3">
+                  <Activity size={18} className="text-indigo-400" />
+                  <span className="text-[10px] font-mono font-black text-indigo-300 uppercase tracking-widest">Auto-Alert System</span>
+               </div>
+               <p className="text-[11px] text-indigo-200/50 leading-relaxed font-light">
+                  RespiraBot will trigger a high-priority notification if a vital dose is bypassed during clinical windows.
+               </p>
+            </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

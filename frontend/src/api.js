@@ -28,14 +28,15 @@ export const login = async (username, password) => {
     localStorage.setItem('user', JSON.stringify({
       user_id: response.data.user_id,
       username: response.data.username,
-      role: response.data.role
+      role: response.data.role,
+      full_name: response.data.full_name
     }));
   }
   return response.data;
 };
 
-export const register = async (username, password, role) => {
-  const response = await api.post(`/auth/register`, { username, password, role });
+export const register = async (username, password, role, fullName) => {
+  const response = await api.post(`/auth/register`, { username, password, role, full_name: fullName });
   return response.data;
 };
 
@@ -80,6 +81,11 @@ export const getHistory = async (userId) => {
   return response.data;
 };
 
+export const getScanResult = async (scanId) => {
+  const response = await api.get(`/scan/${scanId}`);
+  return response.data;
+};
+
 // --- Monitoring APIs ---
 
 export const simulateVitals = async (userId, spo2, respiratoryRate, heartRate) => {
@@ -109,6 +115,13 @@ export const getAlerts = async (userId) => {
 
 export const getAllPatients = async () => {
   const response = await api.get('/patients');
+  return response.data;
+};
+
+export const getPatients = getAllPatients;
+
+export const updateReport = async (userId, reportText) => {
+  const response = await api.post(`/patients/${userId}/report`, { report: reportText });
   return response.data;
 };
 

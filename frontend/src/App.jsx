@@ -34,10 +34,11 @@ function App() {
 
   // Protected Route wrapper
   const ProtectedRoute = ({ children, role }) => {
-    if (!user) return <Navigate to="/login" replace />;
-    if (role && user.role !== role) {
-      // If patient tries to access doctor panel, redirect to patient dashboard
-      return <Navigate to={user.role === 'patient' ? '/patient-dashboard' : '/doctor-panel'} replace />;
+    const currentUser = user || getCurrentUser();
+    if (!currentUser) return <Navigate to="/login" replace />;
+    
+    if (role && currentUser.role !== role) {
+      return <Navigate to={currentUser.role === 'patient' ? '/patient-dashboard' : '/doctor-panel'} replace />;
     }
     return children;
   };

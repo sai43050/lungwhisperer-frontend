@@ -29,3 +29,6 @@ pip-log.txt
 
 # Models (Large binary files - handle via external storage or download)
 *.pth
+Tubercolosis.zip
+archive.zip
+cough sound analysis.zip

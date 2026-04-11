@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UploadCloud, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { UploadCloud, CheckCircle, AlertCircle, Loader2, Image as ImageIcon, Zap, ShieldCheck } from 'lucide-react';
 import { predictScan } from '../api';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function UploadScan({ user }) {
   const [file, setFile] = useState(null);
@@ -46,7 +46,6 @@ export default function UploadScan({ user }) {
     setError(null);
     try {
       const result = await predictScan(user.user_id, file);
-      // Navigate to results page passing the result via state
       navigate(`/results/${result.id}`, { state: { result } });
     } catch (err) {
       setError("Failed to process the scan. Please try again or check backend connection.");
@@ -57,79 +56,162 @@ export default function UploadScan({ user }) {
   };
 
   return (
-    <div className="max-w-3xl mx-auto pt-6 relative z-10">
-      <div className="glass-panel p-8 sm:p-12 rounded-3xl">
-        <h2 className="text-4xl font-display font-extrabold text-white mb-2 tracking-wide">Initialize X-Ray Scan</h2>
-        <p className="text-vignan-200 mb-10 font-light">
-          Upload a clear DICOM, JPEG, or PNG image of the patient's chest X-ray for ResNet-18 analysis.
-        </p>
+    <div className="max-w-4xl mx-auto pt-10 pb-20 relative z-10 px-4">
+      {/* Background Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none" />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-panel p-8 sm:p-12 rounded-[2.5rem] relative overflow-hidden"
+      >
+        {/* Top Shimmer */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+                <Zap size={14} className="text-cyan-400" />
+              </div>
+              <span className="text-[10px] font-mono font-bold text-cyan-400 uppercase tracking-widest">Neural Vision AI</span>
+            </div>
+            <h2 className="text-4xl font-display font-black text-white tracking-tight">Chest X-Ray <span className="text-gradient-cyan">Analysis</span></h2>
+            <p className="text-slate-400 mt-2 font-light max-w-md">
+              High-precision pathological detection using DenseNet-121 architecture.
+            </p>
+          </div>
+          <div className="hidden sm:flex items-center gap-4 text-[10px] font-mono text-slate-500 uppercase tracking-widest bg-black/20 px-4 py-2 rounded-xl border border-white/5">
+             <ShieldCheck size={14} className="text-emerald-400" />
+             <span>HIPAA Compliant Pipeline</span>
+          </div>
+        </div>
 
         <div 
-          className={`border-2 border-dashed rounded-3xl p-12 text-center transition-all duration-300 ${file ? 'border-accent-400 bg-accent-500/10' : 'border-vignan-600/50 hover:border-accent-400/50 bg-slate-900/40 backdrop-blur-md'}`}
+          className={`relative border-2 border-dashed rounded-[2rem] p-4 text-center transition-all duration-500 group ${
+            file 
+              ? 'border-cyan-500/40 bg-cyan-500/5' 
+              : 'border-white/10 hover:border-cyan-500/40 hover:bg-white/5'
+          }`}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
+          {/* Internal Glow on Hover */}
+          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-radial-glow pointer-events-none" />
+
           {!preview ? (
-            <div className="flex flex-col items-center">
-              <div className="p-4 bg-vignan-800/80 rounded-full mb-6 border border-vignan-600/50 shadow-inner">
-                <UploadCloud className="h-10 w-10 text-accent-400" />
+            <div className="py-20 flex flex-col items-center relative z-10">
+              <div className="p-6 bg-slate-900 rounded-3xl mb-6 border border-white/5 shadow-2xl relative">
+                <div className="absolute inset-0 bg-cyan-500/20 blur-xl rounded-full animate-pulse" />
+                <UploadCloud className="h-12 w-12 text-cyan-400 relative z-10" />
               </div>
-              <p className="text-lg text-slate-300 mb-4 font-medium">Drag and drop your scan here, or</p>
-              <label className="cursor-pointer bg-gradient-to-r from-accent-500 to-vignan-500 hover:from-accent-400 hover:to-vignan-400 text-white font-bold py-3 px-8 rounded-full transition-all shadow-[0_0_15px_rgba(0,154,228,0.3)] hover:shadow-[0_0_20px_rgba(0,154,228,0.6)]">
-                Browse Files
+              <h3 className="text-xl font-display font-bold text-white mb-2">Drop chest X-ray here</h3>
+              <p className="text-slate-500 text-sm mb-8 font-light">or click to browse from your computer</p>
+              
+              <label className="btn-primary cursor-pointer inline-flex items-center gap-2 text-sm">
+                <ImageIcon size={18} />
+                Select Scan
                 <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
               </label>
-              <p className="text-sm text-vignan-400 mt-6 tracking-wide">Supported formats: JPEG, PNG, WEBP</p>
+              
+              <div className="mt-10 flex gap-6 text-[10px] font-mono text-slate-600 uppercase tracking-[0.2em]">
+                {['DICOM', 'JPEG', 'PNG', 'WEBP'].map(f => (
+                  <span key={f} className="flex items-center gap-1.5">
+                    <div className="w-1 h-1 rounded-full bg-slate-700" /> {f}
+                  </span>
+                ))}
+              </div>
             </div>
           ) : (
             <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center"
+              className="relative z-10 flex flex-col items-center p-4"
             >
-              <div className="relative rounded-2xl overflow-hidden shadow-[0_0_20px_rgba(0,154,228,0.2)] border border-accent-500/30 mb-6 bg-slate-900/80 p-2">
-                <img src={preview} alt="X-Ray Preview" className="max-h-80 object-contain rounded-xl" />
-                <button 
-                  className="absolute top-4 right-4 bg-red-500/20 backdrop-blur-md border border-red-500/50 rounded-full p-2 text-red-400 shadow-lg hover:bg-red-500 hover:text-white transition-all"
-                  onClick={() => { setFile(null); setPreview(null); }}
-                >
-                  <AlertCircle className="h-5 w-5" />
-                </button>
+              <div className="relative rounded-2xl overflow-hidden group/img">
+                <img src={preview} alt="X-Ray Preview" className="max-h-96 object-contain rounded-2xl border border-white/10 shadow-2xl transition-transform duration-700 group-hover/img:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity flex items-end justify-center p-6">
+                  <button 
+                    className="flex items-center gap-2 px-6 py-2.5 bg-rose-500 text-white rounded-full font-bold text-xs shadow-xl shadow-rose-950/40 hover:bg-rose-600 transition-all"
+                    onClick={() => { setFile(null); setPreview(null); }}
+                  >
+                    <AlertCircle size={14} /> Remove and Change
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center space-x-2 text-accent-400 font-medium mb-2 bg-accent-500/10 px-4 py-2 rounded-full border border-accent-500/20">
-                <CheckCircle className="h-5 w-5" />
-                <span>Image loaded sequence ready: {file.name}</span>
+
+              <div className="mt-6 flex items-center gap-3 px-5 py-2.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/20">
+                <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                <span className="text-xs font-mono font-bold text-white tracking-widest uppercase">
+                  Sequence Ready: {file.name.length > 25 ? file.name.substring(0, 22) + '...' : file.name}
+                </span>
               </div>
             </motion.div>
           )}
         </div>
 
-        {error && (
-          <div className="mt-6 p-4 bg-red-500/10 text-red-400 border border-red-500/30 rounded-xl flex items-center backdrop-blur-md">
-            <AlertCircle className="h-5 w-5 mr-3" />
-            {error}
-          </div>
-        )}
+        <AnimatePresence>
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="mt-6 p-4 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-2xl flex items-center text-sm font-medium backdrop-blur-md"
+            >
+              <AlertCircle className="h-5 w-5 mr-3 shrink-0" />
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {file && (
-          <div className="mt-8 flex justify-end border-t border-vignan-700/50 pt-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-10 flex justify-center border-t border-white/5 pt-10"
+          >
             <button
               onClick={handleUpload}
               disabled={isUploading}
-              className="flex items-center bg-white text-vignan-900 hover:bg-slate-200 disabled:opacity-50 disabled:hover:bg-white font-bold py-3.5 px-8 rounded-full shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] transition-all group relative overflow-hidden"
+              className="btn-primary w-full sm:w-auto min-w-[300px] flex items-center justify-center gap-3 disabled:opacity-40"
             >
-              <div className={`absolute inset-0 bg-accent-500/20 translate-y-full transition-transform duration-1000 ${isUploading ? 'translate-y-0 group-hover:translate-y-0' : ''}`}></div>
               {isUploading ? (
                 <>
-                  <Activity className="animate-pulse-slow h-5 w-5 mr-3 text-accent-500" />
-                  Analyzing Pathologies...
+                  <div className="flex gap-1.5 items-center">
+                    {[0, 0.2, 0.4].map((d, i) => (
+                      <span key={i} className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: `${d}s` }} />
+                    ))}
+                  </div>
+                  <span className="ml-2">Processing Neural Scan...</span>
                 </>
               ) : (
-                'Run AI Inference'
+                <>
+                  <Zap size={18} />
+                  Start AI Analysis
+                </>
               )}
             </button>
-          </div>
+          </motion.div>
         )}
+      </motion.div>
+
+      {/* Info Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+         {[
+           { title: 'Privacy First', desc: 'Secure local processing and encryption.', icon: ShieldCheck, color: 'text-cyan-400' },
+           { title: 'Global Precision', desc: 'Trained on 100k+ clinical images.', icon: Zap, color: 'text-violet-400' },
+           { title: 'Real-time', desc: 'Results in under 2 seconds.', icon: Loader2, color: 'text-emerald-400' }
+         ].map(card => (
+           <div key={card.title} className="glass-card p-6 rounded-2xl flex items-start gap-4">
+              <div className={`p-2 rounded-lg bg-white/5 ${card.color}`}>
+                <card.icon size={18} />
+              </div>
+              <div>
+                <h4 className="text-white font-bold text-sm mb-1">{card.title}</h4>
+                <p className="text-slate-500 text-xs font-light leading-relaxed">{card.desc}</p>
+              </div>
+           </div>
+         ))}
       </div>
     </div>
   );
