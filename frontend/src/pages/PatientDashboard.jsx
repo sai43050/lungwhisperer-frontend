@@ -300,6 +300,59 @@ const PatientDashboard = ({ user }) => {
         />
       </div>
 
+      {/* Quick Analysis Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <motion.div
+          whileHover={{ y: -4 }}
+          className="p-6 rounded-2xl flex flex-col justify-between group cursor-pointer overflow-hidden relative"
+          onClick={() => window.location.href = '/upload'}
+          style={{
+            background: 'linear-gradient(135deg, rgba(6,182,212,0.1) 0%, rgba(13,26,45,0.6) 100%)',
+            border: '1px solid rgba(6,182,212,0.2)',
+            backdropFilter: 'blur(20px)',
+          }}
+        >
+          <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Zap size={100} className="text-cyan-400" />
+          </div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-4">
+               <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+                  < Zap size={20} />
+               </div>
+               <h3 className="font-display font-bold text-white uppercase tracking-tight">Vision Intelligence</h3>
+            </div>
+            <p className="text-slate-400 text-xs mb-6 font-light leading-relaxed">Analyze chest radiology with neural heatmaps for clinical triage.</p>
+            <span className="text-cyan-400 text-[10px] font-mono font-bold uppercase tracking-widest flex items-center gap-1">Launch X-Ray Hub →</span>
+          </div>
+        </motion.div>
+
+        <motion.div
+          whileHover={{ y: -4 }}
+          className="p-6 rounded-2xl flex flex-col justify-between group cursor-pointer overflow-hidden relative"
+          onClick={() => window.location.href = '/upload-audio'}
+          style={{
+            background: 'linear-gradient(135deg, rgba(139,92,246,0.1) 0%, rgba(13,26,45,0.6) 100%)',
+            border: '1px solid rgba(139,92,246,0.2)',
+            backdropFilter: 'blur(20px)',
+          }}
+        >
+          <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Mic size={100} className="text-violet-400" />
+          </div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-4">
+               <div className="p-2.5 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400">
+                  <Activity size={20} />
+               </div>
+               <h3 className="font-display font-bold text-white uppercase tracking-tight">Bio-Acoustic Hub</h3>
+            </div>
+            <p className="text-slate-400 text-xs mb-6 font-light leading-relaxed">Neural analysis of cough biomarkers and spectral sound patterns.</p>
+            <span className="text-violet-400 text-[10px] font-mono font-bold uppercase tracking-widest flex items-center gap-1">Launch Cough AI →</span>
+          </div>
+        </motion.div>
+      </div>
+
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {[

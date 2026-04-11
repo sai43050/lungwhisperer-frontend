@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UploadCloud, CheckCircle, AlertCircle, Loader2, Image as ImageIcon, Zap, ShieldCheck } from 'lucide-react';
+import { UploadCloud, CheckCircle, AlertCircle, Loader2, Image as ImageIcon, Zap, ShieldCheck, Mic } from 'lucide-react';
 import { predictScan } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -80,6 +80,14 @@ export default function UploadScan({ user }) {
             <p className="text-slate-400 mt-2 font-light max-w-md">
               High-precision pathological detection using DenseNet-121 architecture.
             </p>
+            
+            <button 
+              onClick={() => navigate('/upload-audio')}
+              className="mt-6 flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs font-bold hover:bg-violet-500/20 transition-all border-dashed"
+            >
+               <Mic size={14} />
+               Switch to Cough Analysis logic
+            </button>
           </div>
           <div className="hidden sm:flex items-center gap-4 text-[10px] font-mono text-slate-500 uppercase tracking-widest bg-black/20 px-4 py-2 rounded-xl border border-white/5">
              <ShieldCheck size={14} className="text-emerald-400" />

@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Activity, UploadCloud, History, Info, Home, LayoutDashboard, PhoneCall, LogOut, Wind, Pill, Leaf, CloudSun } from 'lucide-react';
+import { Activity, UploadCloud, History, Info, Home, LayoutDashboard, PhoneCall, LogOut, Wind, Pill, Leaf, CloudSun, Mic } from 'lucide-react';
 
 function Navbar({ user, onLogout }) {
   const location = useLocation();
@@ -17,6 +17,7 @@ function Navbar({ user, onLogout }) {
         { name: 'Meds', path: '/medications', icon: Pill },
         { name: 'Weather', path: '/weather', icon: CloudSun },
         { name: 'Analysis', path: '/upload', icon: UploadCloud },
+        { name: 'Cough AI', path: '/upload-audio', icon: Mic },
         { name: 'History', path: '/history', icon: History }
       );
     } else {
