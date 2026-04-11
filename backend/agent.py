@@ -55,7 +55,7 @@ def generate_medical_report(patient_name, vitals_history, scan_history):
 
     try:
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-1.5-flash',
             contents=prompt,
         )
         return response.text
@@ -87,7 +87,7 @@ def chat_with_patient(patient_name, latest_vitals, user_message):
 
     try:
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-1.5-flash',
             contents=prompt,
         )
         return response.text

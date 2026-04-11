@@ -97,15 +97,21 @@ export default function Results() {
           </h3>
 
           {result.gradcam ? (
-            <div className="relative rounded-2xl overflow-hidden border border-accent-500/30 bg-slate-900/60 shadow-[0_0_20px_rgba(0,154,228,0.2)]">
+            <div className="relative rounded-2xl overflow-hidden border border-accent-500/30 bg-slate-900/60 shadow-[0_0_20px_rgba(0,154,228,0.2)] group">
               <img
                 src={result.gradcam}
                 alt="GradCAM Heatmap"
-                className="w-full object-contain rounded-2xl"
+                className="w-full object-contain rounded-2xl transition-transform duration-700 group-hover:scale-105"
               />
-              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                <p className="text-white/60 text-xs font-medium">
-                  Highlighted regions indicate areas of highest model attention
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
+              <div className="absolute top-4 left-4">
+                 <div className="px-3 py-1 bg-red-500/80 backdrop-blur-md rounded-full text-[10px] font-bold text-white uppercase tracking-tighter shadow-lg border border-red-500/50 flex items-center gap-1.5 animate-pulse">
+                    <AlertCircle size={10} /> Active Pathology Matrix
+                 </div>
+              </div>
+              <div className="absolute bottom-4 left-4 right-4">
+                <p className="text-white/80 text-xs font-semibold drop-shadow-md">
+                   Model attention heatmap indicates high probability clinical markers in the highlighted regions.
                 </p>
               </div>
             </div>

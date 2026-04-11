@@ -35,10 +35,10 @@ function Navbar({ user, onLogout }) {
       <nav className="glass-panel rounded-full px-4 py-2 border border-vignan-500/20 shadow-lg shadow-vignan-900/50 backdrop-blur-md bg-vignan-900/60">
         <div className="flex justify-between items-center h-14">
           <Link to="/" className="flex items-center space-x-3 pl-2 group">
-            <div className="bg-accent-500/20 p-2 rounded-full border border-accent-400/30 group-hover:bg-accent-500/40 transition-all shadow-[0_0_15px_rgba(0,154,228,0.3)] group-hover:shadow-[0_0_20px_rgba(0,154,228,0.6)]">
+            <div className="bg-accent-500/20 p-2 rounded-full border border-accent-400/30 group-hover:bg-accent-500/40 transition-all shadow-[0_0_15px_rgba(0,154,228,0.3)] group-hover:shadow-[0_0_20px_rgba(0,154,228,0.6)] animate-pulse-slow">
               <Activity className="h-5 w-5 text-accent-400" />
             </div>
-            <span className="font-display font-bold text-xl text-white hidden sm:block tracking-wide">RespiraCare <span className="text-accent-400">AI</span></span>
+            <span className="font-display font-bold text-xl text-white hidden sm:block tracking-wide">Lung Whisperer <span className="text-accent-400">AI</span></span>
           </Link>
           
           <div className="hidden md:flex space-x-2">

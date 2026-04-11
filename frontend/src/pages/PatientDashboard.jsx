@@ -4,15 +4,15 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Heart, Activity, Wind, AlertTriangle, ShieldCheck, MessageCircle, Send, X } from 'lucide-react';
 
 const VitalsCard = ({ title, value, unit, icon: Icon, colorClass, statusClass }) => (
-  <div className={`bg-white p-6 rounded-2xl shadow-sm border ${statusClass} flex items-center justify-between transition-all duration-300`}>
+  <div className={`glass-card p-6 rounded-2xl border ${statusClass} flex items-center justify-between transition-all duration-300 transform hover:-translate-y-1`}>
     <div>
-      <p className="text-slate-500 text-sm font-medium mb-1">{title}</p>
+      <p className="text-slate-400 text-sm font-medium mb-1">{title}</p>
       <div className="flex items-baseline gap-1">
-        <h3 className="text-3xl font-bold text-slate-800">{value}</h3>
-        <span className="text-slate-500 font-medium">{unit}</span>
+        <h3 className="text-3xl font-bold text-white tracking-tight">{value}</h3>
+        <span className="text-slate-400 font-medium text-xs uppercase">{unit}</span>
       </div>
     </div>
-    <div className={`p-4 rounded-xl ${colorClass}`}>
+    <div className={`p-4 rounded-xl backdrop-blur-md ${colorClass}`}>
       <Icon className="w-8 h-8" />
     </div>
   </div>
@@ -145,7 +145,13 @@ const PatientDashboard = ({ user }) => {
           <h1 className="text-3xl font-display font-bold text-white tracking-wide">
             Welcome back, <span className="text-accent-400 capitalize">{user?.username || 'Patient'}</span>
           </h1>
-          <p className="text-vignan-200 text-sm font-light mt-1">Your autonomous physiological inference matrix is online.</p>
+          <div className="flex items-center gap-2 text-vignan-200 text-sm font-light mt-1">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-500"></span>
+            </span>
+            <span>Synchronized with Clinical Inference Matrix</span>
+          </div>
         </div>
         <div className="flex gap-3">
           <button 

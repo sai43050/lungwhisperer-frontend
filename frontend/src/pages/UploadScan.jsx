@@ -116,12 +116,13 @@ export default function UploadScan({ user }) {
             <button
               onClick={handleUpload}
               disabled={isUploading}
-              className="flex items-center bg-white text-vignan-900 hover:bg-slate-200 disabled:opacity-50 disabled:hover:bg-white font-bold py-3.5 px-8 rounded-full shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] transition-all"
+              className="flex items-center bg-white text-vignan-900 hover:bg-slate-200 disabled:opacity-50 disabled:hover:bg-white font-bold py-3.5 px-8 rounded-full shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] transition-all group relative overflow-hidden"
             >
+              <div className={`absolute inset-0 bg-accent-500/20 translate-y-full transition-transform duration-1000 ${isUploading ? 'translate-y-0 group-hover:translate-y-0' : ''}`}></div>
               {isUploading ? (
                 <>
-                  <Loader2 className="animate-spin h-5 w-5 mr-3 text-accent-500" />
-                  Processing Radiography...
+                  <Activity className="animate-pulse-slow h-5 w-5 mr-3 text-accent-500" />
+                  Analyzing Pathologies...
                 </>
               ) : (
                 'Run AI Inference'
