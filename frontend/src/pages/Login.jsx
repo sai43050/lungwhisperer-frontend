@@ -33,11 +33,17 @@ const Login = ({ onLogin }) => {
       }
     } catch (error) {
       console.error("Auth Error:", error);
-      setErrorMsg(
-        isRegistering
-          ? "Registration failed. Username may already be taken."
-          : "Incorrect username or password. Please try again."
-      );
+      if (isRegistering) {
+        if (error.response?.status === 409) {
+          setErrorMsg("Username already taken. Please choose another.");
+        } else if (error.code === 'ERR_NETWORK' || !error.response) {
+          setErrorMsg("Gateway Unavailable. Please check your internet or retry later.");
+        } else {
+          setErrorMsg("Registration failed. Please try again.");
+        }
+      } else {
+        setErrorMsg("Incorrect username or password. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

@@ -39,19 +39,33 @@ const WeatherAQI = () => {
   };
 
   useEffect(() => {
+    let fallbackTriggered = false;
+    const triggerFallback = () => {
+      if (fallbackTriggered) return;
+      fallbackTriggered = true;
+      console.warn("Geolocation timeout or unavailable - triggering fallback to Sathupalli.");
+      fetchWeather('Sathupalli');
+    };
+
     if (navigator.geolocation) {
+      // Use a manual timeout because some browsers hang indefinitely on the prompt
+      const timeoutId = setTimeout(triggerFallback, 6000);
+
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          clearTimeout(timeoutId);
+          if (fallbackTriggered) return;
           const latLon = `${position.coords.latitude},${position.coords.longitude}`;
           fetchWeather(latLon);
         },
         (err) => {
+          clearTimeout(timeoutId);
           console.warn("Location access denied or unavailable:", err);
-          fetchWeather('Sathupalli'); // Fallback
+          triggerFallback();
         }
       );
     } else {
-      fetchWeather('Sathupalli');
+      triggerFallback();
     }
   }, []);
 
