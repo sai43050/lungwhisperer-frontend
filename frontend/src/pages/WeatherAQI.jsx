@@ -6,23 +6,54 @@ const WeatherAQI = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [location, setLocation] = useState('Sathupalli, Telangana');
-  const [manualKey, setManualKey] = useState(localStorage.getItem('weather_api_key') || '');
+  const [locationName, setLocationName] = useState('Sathupalli, Telangana');
 
-  const API_KEY = import.meta.env.VITE_WEATHER_API_KEY || manualKey;
-
-  const fetchWeather = async (query) => {
-    if (!API_KEY) {
-      setLoading(false);
-      return;
-    }
-
+  const fetchWeather = async (lat, lon) => {
+    setLoading(true);
     try {
-      const resp = await fetch(`https://api.weatherapi.com/v1/current.json?key=${API_KEY}&q=${query}&aqi=yes`);
-      if (!resp.ok) throw new Error("API Key might be invalid or expired.");
-      const json = await resp.json();
-      setData(json);
-      setLocation(`${json.location.name}, ${json.location.region}`);
+      // 1. Fetch Weather Data
+      const weatherResp = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m`);
+      if (!weatherResp.ok) throw new Error("Weather satellite link failed.");
+      const weatherJson = await weatherResp.json();
+
+      // 2. Fetch AQI Data
+      const aqiResp = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,us_epa_index`);
+      if (!aqiResp.ok) throw new Error("Atmospheric sensor data unavailable.");
+      const aqiJson = await aqiResp.json();
+
+      // 3. Reverse Geocode (City Name)
+      try {
+        const geoResp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+        if (geoResp.ok) {
+          const geoJson = await geoResp.json();
+          const city = geoJson.address.city || geoJson.address.town || geoJson.address.village || geoJson.address.suburb || "Unknown Sector";
+          const region = geoJson.address.state || geoJson.address.country;
+          setLocationName(`${city}, ${region}`);
+        }
+      } catch (e) { console.warn("Reverse Geocoding failed", e); }
+
+      // Map To Unified Structure
+      const mappedData = {
+        current: {
+          temp_c: weatherJson.current.temperature_2m,
+          humidity: weatherJson.current.relative_humidity_2m,
+          wind_kph: weatherJson.current.wind_speed_10m,
+          condition: {
+            text: getWeatherCodeText(weatherJson.current.weather_code),
+            icon: getWeatherCodeIcon(weatherJson.current.weather_code, weatherJson.current.is_day)
+          },
+          air_quality: {
+            pm2_5: aqiJson.current.pm2_5,
+            pm10: aqiJson.current.pm10,
+            co: aqiJson.current.carbon_monoxide,
+            no2: aqiJson.current.nitrogen_dioxide,
+            o3: aqiJson.current.ozone,
+            'us-epa-index': aqiJson.current.us_epa_index
+          }
+        }
+      };
+
+      setData(mappedData);
       setLoading(false);
       setError(null);
     } catch (err) {
@@ -31,32 +62,45 @@ const WeatherAQI = () => {
     }
   };
 
-  const handleManualKeySubmit = (e) => {
-    e.preventDefault();
-    localStorage.setItem('weather_api_key', manualKey);
-    setLoading(true);
-    fetchWeather(location);
+  const getWeatherCodeText = (code) => {
+    const codes = {
+      0: 'Clear Sky', 1: 'Mainly Clear', 2: 'Partly Cloudy', 3: 'Overcast',
+      45: 'Foggy', 48: 'Depositing Rime Fog', 51: 'Light Drizzle', 53: 'Moderate Drizzle',
+      55: 'Dense Drizzle', 61: 'Slight Rain', 63: 'Moderate Rain', 65: 'Heavy Rain',
+      71: 'Slight Snow', 73: 'Moderate Snow', 75: 'Heavy Snow', 95: 'Thunderstorm'
+    };
+    return codes[code] || 'Atmospheric Anomaly';
+  };
+
+  const getWeatherCodeIcon = (code, isDay) => {
+    // We map codes to standard weatherAPI-like icons for UI consistency
+    if (code === 0) return isDay ? "https://cdn.weatherapi.com/weather/64x64/day/113.png" : "https://cdn.weatherapi.com/weather/64x64/night/113.png";
+    if (code <= 3) return isDay ? "https://cdn.weatherapi.com/weather/64x64/day/116.png" : "https://cdn.weatherapi.com/weather/64x64/night/116.png";
+    if (code >= 95) return "https://cdn.weatherapi.com/weather/64x64/day/389.png";
+    return isDay ? "https://cdn.weatherapi.com/weather/64x64/day/119.png" : "https://cdn.weatherapi.com/weather/64x64/night/119.png";
   };
 
   useEffect(() => {
+    // Fallback coords for Sathupalli
+    const fallbackLat = 17.2081;
+    const fallbackLon = 80.8333;
+    
     let fallbackTriggered = false;
     const triggerFallback = () => {
       if (fallbackTriggered) return;
       fallbackTriggered = true;
       console.warn("Geolocation timeout or unavailable - triggering fallback to Sathupalli.");
-      fetchWeather('Sathupalli');
+      fetchWeather(fallbackLat, fallbackLon);
     };
 
     if (navigator.geolocation) {
-      // Use a manual timeout because some browsers hang indefinitely on the prompt
       const timeoutId = setTimeout(triggerFallback, 6000);
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
           clearTimeout(timeoutId);
           if (fallbackTriggered) return;
-          const latLon = `${position.coords.latitude},${position.coords.longitude}`;
-          fetchWeather(latLon);
+          fetchWeather(position.coords.latitude, position.coords.longitude);
         },
         (err) => {
           clearTimeout(timeoutId);
@@ -69,40 +113,6 @@ const WeatherAQI = () => {
     }
   }, []);
 
-  if (!API_KEY && !loading) {
-    return (
-      <div className="space-y-6 pt-6 max-w-4xl mx-auto pb-24 relative z-10 px-4">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="glass-panel p-10 rounded-[3rem] border border-white/5 text-center shadow-2xl"
-        >
-          <div className="bg-cyan-500/10 p-5 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 border border-cyan-500/30">
-            <ShieldCheck className="text-cyan-400" size={32} />
-          </div>
-          <h2 className="text-3xl font-display font-black text-white mb-2 uppercase tracking-tight">Environmental Intel</h2>
-          <p className="text-slate-400 text-sm mb-10 max-w-sm mx-auto font-light leading-relaxed">
-            To integrate real-time atmospheric telemetry and AQI data, please synchronize with a WeatherAPI gateway.
-          </p>
-          <form onSubmit={handleManualKeySubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-            <input 
-              type="text" 
-              placeholder="Paste WeatherAPI.com Access Token" 
-              value={manualKey}
-              onChange={(e) => setManualKey(e.target.value)}
-              className="flex-grow bg-black/60 border border-white/10 rounded-2xl px-5 py-3.5 text-sm text-white focus:border-cyan-500/40 outline-none transition-all placeholder:text-slate-600 font-mono"
-            />
-            <button type="submit" className="btn-primary px-8 py-3.5 whitespace-nowrap">Enable Link</button>
-          </form>
-          <div className="mt-10 flex items-center justify-center gap-6 text-[10px] font-mono text-slate-600 uppercase tracking-[0.2em]">
-             <span>Encrypted Tunnel</span>
-             <div className="w-1 h-1 rounded-full bg-slate-800" />
-             <span>Zero Data Retention</span>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
 
   if (loading) {
     return (
@@ -184,7 +194,7 @@ const WeatherAQI = () => {
                <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-black flex items-center gap-2 mb-0.5">
                  <MapPin size={12} className="text-cyan-400" /> Active Registry
                </div>
-               <div className="text-sm font-bold text-white group-hover:text-cyan-400 transition-colors uppercase tracking-tight">{location}</div>
+               <div className="text-sm font-bold text-white group-hover:text-cyan-400 transition-colors uppercase tracking-tight">{locationName}</div>
             </div>
           </div>
         </div>

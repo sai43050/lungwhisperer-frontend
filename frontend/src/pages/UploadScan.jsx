@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { UploadCloud, CheckCircle, AlertCircle, Loader2, Image as ImageIcon, Zap, ShieldCheck, Mic } from 'lucide-react';
 import { predictScan } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '../components/Toast';
 
 export default function UploadScan({ user }) {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState(null);
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   const handleDragOver = useCallback((e) => {
@@ -39,16 +41,26 @@ export default function UploadScan({ user }) {
   const handleUpload = async () => {
     if (!file) {
       setError("Please select an image first.");
+      showToast("No scan selected.", "warning");
       return;
+    }
+
+    if (!user?.user_id) {
+       setError("Authentication session expired. Please log in again.");
+       showToast("User session invalid.", "error");
+       return;
     }
 
     setIsUploading(true);
     setError(null);
     try {
       const result = await predictScan(user.user_id, file);
+      showToast("Scan analyzed successfully!", "success");
       navigate(`/results/${result.id}`, { state: { result } });
     } catch (err) {
-      setError("Failed to process the scan. Please try again or check backend connection.");
+      const msg = err.response?.data?.detail || "Failed to process the scan. Our neural servers might be under high load.";
+      setError(msg);
+      showToast("Analysis failed.", "error");
       console.error(err);
     } finally {
       setIsUploading(false);

@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { UploadCloud, CheckCircle, AlertCircle, Loader2, Mic, Activity, Headphones, Sparkles } from 'lucide-react';
 import { predictAudio } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '../components/Toast';
 
 export default function UploadAudio({ user }) {
   const [file, setFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState(null);
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
   const handleDragOver = useCallback((e) => {
@@ -36,16 +38,26 @@ export default function UploadAudio({ user }) {
   const handleUpload = async () => {
     if (!file) {
       setError("Please select an audio file first.");
+      showToast("No audio file selected.", "warning");
       return;
+    }
+
+    if (!user?.user_id) {
+       setError("Authentication session expired. Please log in again.");
+       showToast("User session invalid.", "error");
+       return;
     }
 
     setIsUploading(true);
     setError(null);
     try {
       const result = await predictAudio(user.user_id, file);
+      showToast("Acoustic analysis complete!", "success");
       navigate(`/results/${result.id}`, { state: { result } });
     } catch (err) {
-      setError("Failed to process the audio scan. Please try again or check backend connection.");
+      const msg = err.response?.data?.detail || "Failed to process the audio scan. High server latency detected.";
+      setError(msg);
+      showToast("Audio analysis failed.", "error");
       console.error(err);
     } finally {
       setIsUploading(false);

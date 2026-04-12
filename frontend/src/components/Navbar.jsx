@@ -3,13 +3,14 @@ import { Activity, UploadCloud, History, Info, Home, LayoutDashboard, PhoneCall,
 
 function Navbar({ user, onLogout }) {
   const location = useLocation();
+  const activeUser = user || getCurrentUser();
 
   let navLinks = [
     { name: 'Home', path: '/', icon: Home },
   ];
 
-  if (user) {
-    if (user.role === 'patient') {
+  if (activeUser) {
+    if (activeUser.role === 'patient') {
       navLinks.push(
         { name: 'Dashboard', path: '/patient-dashboard', icon: LayoutDashboard },
         { name: 'Breathing', path: '/breathing', icon: Wind },
@@ -101,7 +102,7 @@ function Navbar({ user, onLogout }) {
 
           {/* User section */}
           <div className="flex items-center gap-2 pr-1">
-            {user && (
+            {activeUser && (
               <>
                 <div
                   className="flex items-center rounded-xl py-1.5 px-3 gap-2.5"
@@ -118,13 +119,13 @@ function Navbar({ user, onLogout }) {
                       boxShadow: '0 0 12px rgba(6,182,212,0.4)',
                     }}
                   >
-                    {(user.full_name || user.username) ? (user.full_name || user.username)[0].toUpperCase() : 'U'}
+                    {(activeUser.full_name || activeUser.username) ? (activeUser.full_name || activeUser.username)[0].toUpperCase() : 'U'}
                   </div>
                   <div className="hidden sm:block leading-none">
                     <div className="text-xs font-semibold text-white capitalize truncate max-w-[100px]">
-                      {user.role === 'doctor' ? 'Dr. ' : ''}{user.full_name || user.username}
+                      {activeUser.role === 'doctor' ? 'Dr. ' : ''}{activeUser.full_name || activeUser.username}
                     </div>
-                    <div className="text-[9px] text-cyan-500/70 uppercase tracking-wider font-mono mt-0.5">{user.role}</div>
+                    <div className="text-[9px] text-cyan-500/70 uppercase tracking-wider font-mono mt-0.5">{activeUser.role}</div>
                   </div>
                 </div>
 
@@ -138,7 +139,7 @@ function Navbar({ user, onLogout }) {
                 </button>
               </>
             )}
-            {!user && (
+            {!activeUser && (
               <Link
                 to="/login"
                 className="btn-primary text-sm px-5 py-2"

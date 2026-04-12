@@ -16,6 +16,7 @@ import SmokingTracker from './pages/SmokingTracker';
 import WeatherAQI from './pages/WeatherAQI';
 import Medications from './pages/Medications';
 import { getCurrentUser } from './api';
+import { ToastProvider } from './components/Toast';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -44,34 +45,36 @@ function App() {
   };
 
   return (
-    <Router>
-      <div className="min-h-screen flex flex-col font-sans">
-        <Navbar user={user} onLogout={handleLogout} />
-        <main className="flex-grow container mx-auto px-4 py-8 pt-24">
-          <Routes>
-            <Route path="/login" element={!user ? <Login onLogin={setUser} /> : <Navigate to={user.role === 'patient' ? '/patient-dashboard' : '/doctor-panel'} />} />
-            
-            <Route path="/patient-dashboard" element={<ProtectedRoute role="patient"><PatientDashboard user={user} /></ProtectedRoute>} />
-            <Route path="/doctor-panel" element={<ProtectedRoute role="doctor"><DoctorPanel /></ProtectedRoute>} />
-            <Route path="/telemedicine" element={<ProtectedRoute><Telemedicine /></ProtectedRoute>} />
-            
-            <Route path="/breathing" element={<ProtectedRoute><Breathing /></ProtectedRoute>} />
-            <Route path="/quitsmoking" element={<ProtectedRoute><SmokingTracker /></ProtectedRoute>} />
-            <Route path="/weather" element={<ProtectedRoute><WeatherAQI /></ProtectedRoute>} />
-            <Route path="/medications" element={<ProtectedRoute><Medications /></ProtectedRoute>} />
+    <ToastProvider>
+      <Router>
+        <div className="min-h-screen flex flex-col font-sans">
+          <Navbar user={user} onLogout={handleLogout} />
+          <main className="flex-grow container mx-auto px-4 py-8 pt-24">
+            <Routes>
+              <Route path="/login" element={!user ? <Login onLogin={setUser} /> : <Navigate to={user.role === 'patient' ? '/patient-dashboard' : '/doctor-panel'} />} />
+              
+              <Route path="/patient-dashboard" element={<ProtectedRoute role="patient"><PatientDashboard user={user} /></ProtectedRoute>} />
+              <Route path="/doctor-panel" element={<ProtectedRoute role="doctor"><DoctorPanel /></ProtectedRoute>} />
+              <Route path="/telemedicine" element={<ProtectedRoute><Telemedicine /></ProtectedRoute>} />
+              
+              <Route path="/breathing" element={<ProtectedRoute><Breathing /></ProtectedRoute>} />
+              <Route path="/quitsmoking" element={<ProtectedRoute><SmokingTracker /></ProtectedRoute>} />
+              <Route path="/weather" element={<ProtectedRoute><WeatherAQI /></ProtectedRoute>} />
+              <Route path="/medications" element={<ProtectedRoute><Medications /></ProtectedRoute>} />
 
-            <Route path="/upload" element={<ProtectedRoute><UploadScan user={user} /></ProtectedRoute>} />
-            <Route path="/upload-audio" element={<ProtectedRoute><UploadAudio user={user} /></ProtectedRoute>} />
-            <Route path="/results/:id" element={<ProtectedRoute><Results /></ProtectedRoute>} />
-            <Route path="/history" element={<ProtectedRoute><History user={user} /></ProtectedRoute>} />
-            
-            <Route path="/about" element={<About />} />
-            <Route path="/" element={<Home user={user} />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </main>
-      </div>
-    </Router>
+              <Route path="/upload" element={<ProtectedRoute><UploadScan user={user} /></ProtectedRoute>} />
+              <Route path="/upload-audio" element={<ProtectedRoute><UploadAudio user={user} /></ProtectedRoute>} />
+              <Route path="/results/:id" element={<ProtectedRoute><Results /></ProtectedRoute>} />
+              <Route path="/history" element={<ProtectedRoute><History user={user} /></ProtectedRoute>} />
+              
+              <Route path="/about" element={<About />} />
+              <Route path="/" element={<Home user={user} />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
+        </div>
+      </Router>
+    </ToastProvider>
   );
 }
 

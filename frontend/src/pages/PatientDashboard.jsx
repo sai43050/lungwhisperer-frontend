@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { simulateVitals, getVitalsHistory, sendAIChatMessage } from '../api';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
-import { Heart, Activity, Wind, AlertTriangle, ShieldCheck, MessageCircle, Send, X, Zap, TrendingUp } from 'lucide-react';
+import { Heart, Activity, Wind, AlertTriangle, ShieldCheck, MessageCircle, Send, X, Zap, TrendingUp, Mic } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '../components/Toast';
 
 const VitalsCard = ({ title, value, unit, icon: Icon, accentColor, glowColor, borderColor, status }) => {
   const isAlert = status === 'alert';
@@ -95,7 +97,11 @@ const PatientDashboard = ({ user }) => {
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef(null);
 
+  const { showToast } = useToast();
+  const navigate = useNavigate();
+
   const fetchHistory = async () => {
+    if (!user?.user_id) return;
     try {
       const data = await getVitalsHistory(user.user_id);
       if (Array.isArray(data)) {
@@ -107,10 +113,17 @@ const PatientDashboard = ({ user }) => {
         })).slice(-15);
         setHistory(formatted);
       }
-    } catch (err) { console.error(err); }
+    } catch (err) { 
+      console.error(err);
+      showToast("Unable to fetch vitals history. Check your connection.", "error");
+    }
   };
 
-  useEffect(() => { fetchHistory(); }, []);
+  useEffect(() => { 
+    if (user?.user_id) {
+      fetchHistory(); 
+    }
+  }, [user]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -139,12 +152,19 @@ const PatientDashboard = ({ user }) => {
           return payload;
         });
       }
-      const res = await simulateVitals(user.user_id, payload.spo2, payload.respiratory_rate, payload.heart_rate);
+      const res = await simulateVitals(user?.user_id || 'guest', payload.spo2, payload.respiratory_rate, payload.heart_rate);
       setStatus(res.health_status);
       setRecommendation(res.recommendation);
       setVitals(payload);
       fetchHistory();
-    } catch (err) { console.error("Simulation error", err); }
+      
+      if (res.health_status === 'Critical') {
+        showToast("CRITICAL ALERT: Abnormal vitals detected!", "error");
+      }
+    } catch (err) { 
+      console.error("Simulation error", err);
+      showToast("Vitals sync failed. Retrying...", "warning");
+    }
   };
 
   const toggleSimulation = () => {
@@ -305,7 +325,7 @@ const PatientDashboard = ({ user }) => {
         <motion.div
           whileHover={{ y: -4 }}
           className="p-6 rounded-2xl flex flex-col justify-between group cursor-pointer overflow-hidden relative"
-          onClick={() => window.location.href = '/upload'}
+          onClick={() => navigate('/upload')}
           style={{
             background: 'linear-gradient(135deg, rgba(6,182,212,0.1) 0%, rgba(13,26,45,0.6) 100%)',
             border: '1px solid rgba(6,182,212,0.2)',
@@ -330,7 +350,7 @@ const PatientDashboard = ({ user }) => {
         <motion.div
           whileHover={{ y: -4 }}
           className="p-6 rounded-2xl flex flex-col justify-between group cursor-pointer overflow-hidden relative"
-          onClick={() => window.location.href = '/upload-audio'}
+          onClick={() => navigate('/upload-audio')}
           style={{
             background: 'linear-gradient(135deg, rgba(139,92,246,0.1) 0%, rgba(13,26,45,0.6) 100%)',
             border: '1px solid rgba(139,92,246,0.2)',

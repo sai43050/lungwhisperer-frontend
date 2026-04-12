@@ -7,24 +7,33 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../components/Toast';
 
 export default function History({ user }) {
   const [scans, setScans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState(false);
+  const { showToast } = useToast();
   const navigate = useNavigate();
 
+  const fetchHistory = async () => {
+    if (!user?.user_id) return;
+    setLoading(true);
+    setError(false);
+    try {
+      const data = await getHistory(user.user_id);
+      setScans(data);
+    } catch (err) {
+      console.error(err);
+      setError(true);
+      showToast("Medical vault sync failed.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const data = await getHistory(user.user_id);
-        setScans(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchHistory();
   }, [user]);
 
@@ -35,9 +44,29 @@ export default function History({ user }) {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh]">
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <Loader2 className="h-10 w-10 text-cyan-400 animate-spin mb-4" />
         <p className="text-slate-500 font-mono text-[10px] uppercase tracking-widest animate-pulse">Syncing Medical Vault...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
+        <div className="p-6 bg-rose-500/10 rounded-full border border-rose-500/20 mb-6">
+           <AlertCircle className="h-10 w-10 text-rose-400" />
+        </div>
+        <h3 className="text-2xl font-display font-bold text-white mb-2">Vault Connection Error</h3>
+        <p className="text-slate-400 max-w-sm mb-8 font-light">
+           We're having trouble reaching the diagnostic archives. This might be a temporary network issue.
+        </p>
+        <button
+          onClick={fetchHistory}
+          className="flex items-center gap-2 px-8 py-3 bg-white/5 border border-white/10 rounded-2xl text-white font-bold text-sm hover:bg-white/10 transition-all"
+        >
+          <Clock className="w-4 h-4" /> Retry Connection
+        </button>
       </div>
     );
   }
@@ -126,7 +155,7 @@ export default function History({ user }) {
                     <div className="text-right">
                        <p className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mb-1">ID: #{String(scan.id).padStart(5, '0')}</p>
                        <div className="flex items-center justify-end gap-1.5 text-[10px] text-slate-400 font-mono">
-                          <Calendar size={12} className="text-cyan-400" /> {new Date(scan.timestamp).toLocaleDateString()}
+                          <Calendar size={12} className="text-cyan-400" /> {scan.timestamp ? new Date(scan.timestamp).toLocaleDateString() : 'N/A'}
                        </div>
                     </div>
                   </div>
