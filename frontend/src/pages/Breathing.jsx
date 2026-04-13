@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wind, Play, Pause, RotateCcw, Info, Activity, ShieldCheck, Heart } from 'lucide-react';
+import { logBreathingSession, getBreathingHistory } from '../api';
 
 const techniques = [
   {

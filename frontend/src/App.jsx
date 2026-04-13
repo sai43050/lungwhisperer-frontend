@@ -18,6 +18,35 @@ import Medications from './pages/Medications';
 import { getCurrentUser } from './api';
 import { ToastProvider } from './components/Toast';
 
+// --- Error Boundary Component ---
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError(error) { return { hasError: true }; }
+  componentDidCatch(error, errorInfo) { 
+    console.error("AccuVital System Fault:", error, errorInfo);
+    // Attempt local storage purge on failure
+    localStorage.removeItem('user');
+    localStorage.removeItem('access_token');
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-[#030712] text-white p-8 text-center">
+          <div className="max-w-md">
+            <h1 className="text-3xl font-black mb-4">Neural Link Interrupted</h1>
+            <p className="text-slate-400 mb-8">A configuration conflict in your browser cache has caused a temporary fault. We have cleared your local state.</p>
+            <button onClick={() => window.location.href = '/'} className="btn-primary">Force System Reboot</button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function App() {
   const [user, setUser] = useState(null);
 
@@ -51,36 +80,38 @@ function App() {
   };
 
   return (
-    <ToastProvider>
-      <Router>
-        <div className="min-h-screen flex flex-col font-sans">
-          <Navbar user={user} onLogout={handleLogout} />
-          <main className="flex-grow container mx-auto px-4 py-8 pt-24">
-            <Routes>
-              <Route path="/login" element={!user ? <Login onLogin={setUser} /> : <Navigate to={user.role === 'patient' ? '/patient-dashboard' : '/doctor-panel'} />} />
-              
-              <Route path="/patient-dashboard" element={<ProtectedRoute role="patient"><PatientDashboard user={user} /></ProtectedRoute>} />
-              <Route path="/doctor-panel" element={<ProtectedRoute role="doctor"><DoctorPanel /></ProtectedRoute>} />
-              <Route path="/telemedicine" element={<ProtectedRoute><Telemedicine /></ProtectedRoute>} />
-              
-              <Route path="/breathing" element={<ProtectedRoute><Breathing /></ProtectedRoute>} />
-              <Route path="/quitsmoking" element={<ProtectedRoute><SmokingTracker /></ProtectedRoute>} />
-              <Route path="/weather" element={<ProtectedRoute><WeatherAQI /></ProtectedRoute>} />
-              <Route path="/medications" element={<ProtectedRoute><Medications /></ProtectedRoute>} />
+    <ErrorBoundary>
+      <ToastProvider>
+        <Router>
+          <div className="min-h-screen flex flex-col font-sans">
+            <Navbar user={user} onLogout={handleLogout} />
+            <main className="flex-grow container mx-auto px-4 py-8 pt-24">
+              <Routes>
+                <Route path="/login" element={!user ? <Login onLogin={setUser} /> : <Navigate to={user.role === 'patient' ? '/patient-dashboard' : '/doctor-panel'} />} />
+                
+                <Route path="/patient-dashboard" element={<ProtectedRoute role="patient"><PatientDashboard user={user} /></ProtectedRoute>} />
+                <Route path="/doctor-panel" element={<ProtectedRoute role="doctor"><DoctorPanel /></ProtectedRoute>} />
+                <Route path="/telemedicine" element={<ProtectedRoute><Telemedicine /></ProtectedRoute>} />
+                
+                <Route path="/breathing" element={<ProtectedRoute><Breathing /></ProtectedRoute>} />
+                <Route path="/quitsmoking" element={<ProtectedRoute><SmokingTracker /></ProtectedRoute>} />
+                <Route path="/weather" element={<ProtectedRoute><WeatherAQI /></ProtectedRoute>} />
+                <Route path="/medications" element={<ProtectedRoute><Medications /></ProtectedRoute>} />
 
-              <Route path="/upload" element={<ProtectedRoute><UploadScan user={user} /></ProtectedRoute>} />
-              <Route path="/upload-audio" element={<ProtectedRoute><UploadAudio user={user} /></ProtectedRoute>} />
-              <Route path="/results/:id" element={<ProtectedRoute><Results /></ProtectedRoute>} />
-              <Route path="/history" element={<ProtectedRoute><History user={user} /></ProtectedRoute>} />
-              
-              <Route path="/about" element={<About />} />
-              <Route path="/" element={<Home user={user} />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
-        </div>
-      </Router>
-    </ToastProvider>
+                <Route path="/upload" element={<ProtectedRoute><UploadScan user={user} /></ProtectedRoute>} />
+                <Route path="/upload-audio" element={<ProtectedRoute><UploadAudio user={user} /></ProtectedRoute>} />
+                <Route path="/results/:id" element={<ProtectedRoute><Results /></ProtectedRoute>} />
+                <Route path="/history" element={<ProtectedRoute><History user={user} /></ProtectedRoute>} />
+                
+                <Route path="/about" element={<About />} />
+                <Route path="/" element={<Home user={user} />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </main>
+          </div>
+        </Router>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 }
 
