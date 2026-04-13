@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Activity, UploadCloud, History, Info, Home, LayoutDashboard, PhoneCall, LogOut, Wind, Pill, Leaf, CloudSun, Mic } from 'lucide-react';
+import { getCurrentUser } from '../api';
 
 function Navbar({ user, onLogout }) {
   const location = useLocation();
