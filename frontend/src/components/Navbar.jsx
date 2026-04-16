@@ -35,26 +35,25 @@ function Navbar({ user, onLogout }) {
   navLinks.push({ name: 'About', path: '/about', icon: Info });
 
   return (
-    <div className="pt-4 px-4 sm:px-8 max-w-7xl mx-auto fixed top-0 w-full z-50">
-      {/* Subtle top gradient bar */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent" />
-
+    <div className="fixed top-6 left-0 right-0 z-50 flex justify-center mt-2 w-full px-4 pointer-events-none">
       <nav
-        className="rounded-2xl px-4 py-2 backdrop-blur-2xl"
+        className="rounded-full px-3 py-2 backdrop-blur-[40px] pointer-events-auto flex justify-between items-center w-full max-w-5xl"
         style={{
-          background: 'linear-gradient(135deg, rgba(13,26,45,0.85) 0%, rgba(7,13,26,0.9) 100%)',
-          border: '1px solid rgba(255,255,255,0.07)',
-          boxShadow: '0 0 0 0.5px rgba(255,255,255,0.04), 0 20px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)',
+          background: 'rgba(5, 5, 5, 0.4)',
+          border: 'none',
+          boxShadow: '0 0 0 0.5px rgba(255,255,255,0.06), 0 20px 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.08)',
         }}
       >
-        <div className="flex justify-between items-center h-14">
-          {/* Typography Branding (No Logo Image) */}
-          <Link to="/" className="flex items-center space-x-3 pl-1 group">
+        <div className="flex justify-between items-center w-full h-12">
+          {/* Typography Branding */}
+          <Link to="/" className="flex items-center space-x-3 pl-3 group">
             <div className="hidden sm:block">
-              <span className="font-display font-black text-2xl text-white tracking-tight">
-                LUNG <span className="text-medical">WHISPERER</span>
-              </span>
-              <div className="text-[10px] font-mono text-medical/60 uppercase tracking-[0.3em] -mt-1 font-bold">Advanced Neural Engine</div>
+               <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee] animate-pulse" />
+                  <span className="font-display font-black text-xl text-white tracking-tighter">
+                    LUNG<span className="text-cyan-400 font-light">WHISPERER</span>
+                  </span>
+               </div>
             </div>
           </Link>
 

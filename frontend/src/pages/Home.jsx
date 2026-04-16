@@ -26,66 +26,62 @@ export default function Home({ user }) {
   return (
     <div className="flex flex-col items-center pt-20 pb-20 relative overflow-hidden min-h-screen font-sans">
 
-      {/* Animated aurora background orbs */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {/* Cinematic Spotlight Background */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden bg-[#030303]">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-cyan-500/20 rounded-[100%] blur-[120px] mix-blend-screen opacity-60 animate-pulse-slow" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-violet-600/20 rounded-[100%] blur-[80px] mix-blend-screen opacity-40" />
 
-        <div className="absolute -top-48 -right-48 w-[700px] h-[700px] rounded-full opacity-25 animate-pulse-slow"
-          style={{ background: 'radial-gradient(circle, rgba(29,78,216,0.3) 0%, transparent 70%)', filter: 'blur(100px)' }} />
-        <div className="absolute -bottom-48 -left-48 w-[700px] h-[700px] rounded-full opacity-20 animate-pulse-slow"
-          style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%)', filter: 'blur(100px)', animationDelay: '2s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full opacity-15"
-          style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.2) 0%, transparent 70%)', filter: 'blur(80px)' }} />
-
-        {/* Grid overlay */}
-        <div className="absolute inset-0 opacity-[0.15]"
+        {/* Dense Micro Grid */}
+        <div className="absolute inset-0 opacity-[0.03]"
           style={{
-            backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' width='64' height='64' fill='none' stroke='rgb(255 255 255 / 0.05)'%3e%3cpath d='M0 .5H63.5V64'/%3e%3c/svg%3e\")"
+            backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(255 255 255 / 1)'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e\")",
+            backgroundSize: "24px 24px"
           }} />
       </div>
 
       {/* Hero Section */}
-      <section className="w-full text-center py-20 px-4 relative z-10">
+      <section className="w-full text-center py-32 px-4 relative z-10 flex flex-col items-center justify-center min-h-[80vh]">
         <motion.div
           variants={floatVariants}
           initial="initial"
           animate="animate"
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="max-w-5xl mx-auto"
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-6xl mx-auto"
         >
           {/* Badge */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 }}
-            className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="inline-flex items-center gap-3 mb-10 px-5 py-2 rounded-full"
             style={{
-              background: 'rgba(0,201,167,0.08)',
-              border: '1px solid rgba(0,201,167,0.25)',
-              backdropFilter: 'blur(12px)',
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              backdropFilter: 'blur(20px)',
             }}
           >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-medical opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-medical" />
-            </span>
-            <span className="text-xs font-mono font-bold text-medical uppercase tracking-[0.2em]">
-              Next-Gen Respiratory Intelligence
+            <div className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400 shadow-[0_0_10px_#22d3ee]" />
+            </div>
+            <span className="text-[10px] font-mono font-bold text-slate-300 uppercase tracking-[0.25em]">
+              Precision AI Architecture v5.0
             </span>
           </motion.div>
 
           {/* Headline */}
-          <h1 className="text-6xl md:text-8xl lg:text-9xl font-display font-black text-white mb-6 tracking-tighter leading-[0.9]">
+          <h1 className="text-7xl md:text-9xl lg:text-[10rem] font-display font-black text-white mb-6 tracking-tighter leading-[0.85]">
             {user ? (
               <>
-                PROACTIVE <br />
-                <span className="text-medical uppercase block">
+                <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-500">PROACTIVE</span> <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-violet-500 uppercase block tracking-tighter drop-shadow-[0_0_40px_rgba(34,211,238,0.2)]">
                   HEALTHCARE
                 </span>
               </>
             ) : (
               <>
-                NEXT-GEN <br />
-                <span className="text-medical uppercase block">
+                <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-500">NEXT-GEN</span> <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-violet-500 uppercase block tracking-tighter drop-shadow-[0_0_40px_rgba(34,211,238,0.2)]">
                   LUNG AI
                 </span>
               </>
@@ -96,20 +92,20 @@ export default function Home({ user }) {
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto font-light leading-relaxed"
+            transition={{ delay: 0.5 }}
+            className="text-lg md:text-xl text-slate-400 mb-14 max-w-2xl mx-auto font-light leading-relaxed tracking-wide"
           >
             {user
-              ? 'Your respiratory health monitoring is active. Select an analysis mode below.'
-              : 'Upload chest X-rays or cough recordings for instant AI-driven diagnostic analysis with clinical precision.'}
+              ? 'Your respiratory health monitoring is securely encrypted. Select an analysis mode below.'
+              : 'Deploy clinical-grade X-ray modeling and Live Acoustic Biomarker tracking inside an uncompromising architecture.'}
           </motion.p>
 
           {/* CTA Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.55 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            transition={{ delay: 0.65 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-6"
           >
             {user ? (
               <>
