@@ -4,6 +4,8 @@ import { AlertCircle, CheckCircle2, ChevronLeft, Microscope, Stethoscope, Lightb
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { getScanResult, generateMedicalReport, getCurrentUser } from '../api';
+import { useToast } from '../components/Toast';
+
 
 export default function Results() {
   const location = useLocation();
@@ -14,7 +16,9 @@ export default function Results() {
   const [error, setError] = useState(null);
   const [fusionReport, setFusionReport] = useState(null);
   const [isFusionLoading, setIsFusionLoading] = useState(false);
+  const { showToast } = useToast();
   const user = getCurrentUser();
+
 
   useEffect(() => {
     const stateResult = location.state?.result;
@@ -45,11 +49,15 @@ export default function Results() {
     try {
       const data = await generateMedicalReport(user.user_id);
       setFusionReport(data.report || data);
+      showToast("Deep Bio-Data Fusion Complete.", "success");
     } catch (err) {
       console.error("Fusion Report Failed:", err);
+      const msg = err.response?.data?.detail || "Biological synthesis failed. Please try again later.";
+      showToast(msg, "error");
     } finally {
       setIsFusionLoading(false);
     }
+
   };
 
   if (loading) {
