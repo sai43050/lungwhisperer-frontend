@@ -201,8 +201,9 @@ def predict_real_image(image_bytes: bytes, filename: str = "") -> dict:
     # Guarantee bounded confidence [0, 100]
     confidence = min(max(confidence, 0.0), 100.0)
     
-    # Generate Heatmap specifically targeting the highest scoring pathological feature
-    heatmap_b64 = generate_gradcam_b64(model, tensor, target_idx)
+    # NOTE: GradCAM is disabled in production to optimize for memory and prevent server hangs.
+    # heatmap_b64 = generate_gradcam_b64(model, tensor, target_idx)
+    heatmap_b64 = "" 
     
     return {
         "prediction": final_pred,

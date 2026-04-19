@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UploadCloud, CheckCircle, AlertCircle, Loader2, Image as ImageIcon, Zap, ShieldCheck, Mic } from 'lucide-react';
 import { predictScan } from '../api';
@@ -12,6 +12,8 @@ export default function UploadScan({ user }) {
   const [error, setError] = useState(null);
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const [statusStep, setStatusStep] = useState(0); // 0: Idle, 1: Optimizing, 2: Scanning, 3: Finalizing
+  const loadingTimer = useRef(null);
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();
@@ -53,8 +55,23 @@ export default function UploadScan({ user }) {
 
     setIsUploading(true);
     setError(null);
+    setStatusStep(1);
+
+    // Safety timeout: If no response after 75s, show a manual reset option
+    loadingTimer.current = setTimeout(() => {
+      setError("The analysis is taking longer than usual. This can happen during high traffic. Please wait a bit longer or try reset.");
+    }, 75000);
+
     try {
+      // Step 1: Optimizing Image
+      await new Promise(r => setTimeout(r, 800)); 
+      setStatusStep(2); // Scanning
+
       const result = await predictScan(user.user_id, file);
+      
+      setStatusStep(3); // Finalizing
+      await new Promise(r => setTimeout(r, 800));
+
       showToast("Scan analyzed successfully!", "success");
       navigate(`/results/${result.id}`, { state: { result } });
     } catch (err) {
@@ -63,7 +80,7 @@ export default function UploadScan({ user }) {
       if (err.response && err.response.status === 401) {
         msg = "Session expired. Please log in again to analyze clinical scans.";
       } else if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
-        msg = "The AI server is warming up (Railway cold start). Please wait 30 seconds and try again.";
+        msg = "The AI server is warming up (Railway cold start). This usually takes 30-60 seconds. Please try again in a moment.";
       } else {
         msg = err.response?.data?.detail || "Failed to process the scan. The server may be restarting — please try again in a moment.";
       }
@@ -71,6 +88,8 @@ export default function UploadScan({ user }) {
       showToast("Analysis failed.", "error");
     } finally {
       setIsUploading(false);
+      setStatusStep(0);
+      if (loadingTimer.current) clearTimeout(loadingTimer.current);
     }
   };
 
@@ -209,7 +228,12 @@ export default function UploadScan({ user }) {
                       <span key={i} className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: `${d}s` }} />
                     ))}
                   </div>
-                  <span className="ml-2">Processing Neural Scan...</span>
+                  <span className="ml-2">
+                    {statusStep === 1 && "Optimizing Imagery..."}
+                    {statusStep === 2 && "Neural Scanning..."}
+                    {statusStep === 3 && "Packaging Results..."}
+                    {!statusStep && "Processing Neural Scan..."}
+                  </span>
                 </>
               ) : (
                 <>
