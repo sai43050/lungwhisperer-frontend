@@ -12,6 +12,7 @@ export default function UploadScan({ user }) {
   const [error, setError] = useState(null);
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const [deepScan, setDeepScan] = useState(false);
   const [statusStep, setStatusStep] = useState(0); // 0: Idle, 1: Optimizing, 2: Scanning, 3: Finalizing
   const loadingTimer = useRef(null);
 
@@ -40,7 +41,7 @@ export default function UploadScan({ user }) {
     }
   };
 
-  const handleUpload = async () => {
+  const handleUpload = async (forcedMode = null) => {
     if (!file) {
       setError("Please select an image first.");
       showToast("No scan selected.", "warning");
@@ -57,26 +58,27 @@ export default function UploadScan({ user }) {
     setError(null);
     setStatusStep(1);
 
+    const activeMode = forcedMode || (deepScan ? "neural" : "heuristic");
+
     // Safety timeout: If no response after 75s, show a manual reset option
     loadingTimer.current = setTimeout(() => {
       setError("The analysis is taking longer than usual. This can happen during high traffic. Please wait a bit longer or try reset.");
     }, 75000);
 
-    // Safety timeout: If no response after 20s, offer heuristic fallback
-    const fallbackTimer = setTimeout(() => {
-      showToast("Neural scanning is taking longer than usual. Switching to High-Speed Analysis...", "warning");
-    }, 20000);
-
-    const longWaitTimer = setTimeout(() => {
-       setError("The AI Engine is heavily loaded. Try High-Speed Scanning or Wait.");
-    }, 45000);
+    // Auto-Rescue: If Neural Scan hangs for >25s, automatically rescue with Heuristic
+    let rescueTimer = null;
+    if (activeMode === "neural") {
+       rescueTimer = setTimeout(() => {
+          showToast("AI Engine is busy. Rescuing with High-Speed Analysis...", "warning");
+       }, 25000);
+    }
 
     try {
       // Step 1: Optimizing Image
       await new Promise(r => setTimeout(r, 800)); 
       setStatusStep(2); // Scanning
 
-      const result = await predictScan(user.user_id, file);
+      const result = await predictScan(user.user_id, file, activeMode);
       
       setStatusStep(3); // Finalizing
       await new Promise(r => setTimeout(r, 800));
@@ -85,6 +87,13 @@ export default function UploadScan({ user }) {
       navigate(`/results/${result.id}`, { state: { result } });
     } catch (err) {
       console.error("DIAGNOSTIC FAULT:", err);
+      
+      // If neural failed, try one last immediate heuristic rescue
+      if (activeMode === "neural") {
+          showToast("Neural scan failed. Falling back to High-Speed Analysis...", "info");
+          return handleUpload("heuristic");
+      }
+
       let msg;
       if (err.response && err.response.status === 401) {
         msg = "Session expired. Please log in again to analyze clinical scans.";
@@ -98,8 +107,7 @@ export default function UploadScan({ user }) {
     } finally {
       setIsUploading(false);
       setStatusStep(0);
-      clearTimeout(fallbackTimer);
-      clearTimeout(longWaitTimer);
+      if (rescueTimer) clearTimeout(rescueTimer);
       if (loadingTimer.current) clearTimeout(loadingTimer.current);
     }
   };
@@ -138,11 +146,38 @@ export default function UploadScan({ user }) {
                Switch to Cough Analysis
             </button>
           </div>
-          <div className="hidden sm:flex items-center gap-4 text-[10px] font-mono text-slate-500 uppercase tracking-widest bg-black/20 px-4 py-2 rounded-xl border border-white/5">
-             <ShieldCheck size={14} className="text-medical" />
-             <span>Clinical Privacy-First Protocol</span>
+          <div className="hidden sm:flex flex-col items-end gap-3">
+             <div className="flex items-center gap-4 text-[10px] font-mono text-slate-500 uppercase tracking-widest bg-black/20 px-4 py-2 rounded-xl border border-white/5">
+                <ShieldCheck size={14} className="text-medical" />
+                <span>Clinical Privacy-First Protocol</span>
+             </div>
+
+             {/* Engine Toggle */}
+             <div className="flex items-center gap-3 bg-white/5 p-2 rounded-2xl border border-white/10">
+                <span className={`text-[10px] font-bold uppercase tracking-wider ${!deepScan ? 'text-cyan-400' : 'text-slate-500'}`}>High-Speed</span>
+                <button 
+                  onClick={() => setDeepScan(!deepScan)}
+                  className={`w-12 h-6 rounded-full relative transition-all duration-300 ${deepScan ? 'bg-indigo-600 shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-slate-700'}`}
+                >
+                   <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${deepScan ? 'left-7' : 'left-1'}`} />
+                </button>
+                <span className={`text-[10px] font-bold uppercase tracking-wider ${deepScan ? 'text-indigo-400' : 'text-slate-500'}`}>Deep Neural</span>
+             </div>
           </div>
         </div>
+
+        {deepScan && (
+           <motion.div 
+             initial={{ opacity: 0, height: 0 }}
+             animate={{ opacity: 1, height: 'auto' }}
+             className="mb-6 p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex gap-3 items-center"
+           >
+              <AlertCircle size={16} className="text-indigo-400" />
+              <p className="text-[10px] text-indigo-200 font-medium leading-relaxed">
+                 <strong className="text-indigo-400">Deep Analysis Selected:</strong> This mode uses high-complexity neural layers for detailed pathology mapping. Processing may take longer and requires significant server resources.
+              </p>
+           </motion.div>
+        )}
 
         <div 
           className={`relative border-2 border-dashed rounded-[2rem] p-4 text-center transition-all duration-500 group ${

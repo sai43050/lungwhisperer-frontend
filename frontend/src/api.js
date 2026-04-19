@@ -75,10 +75,11 @@ export const logout = () => {
   localStorage.removeItem('access_token');
 };
 
-export const predictScan = async (userId, file) => {
+export const predictScan = async (userId, file, mode = "heuristic") => {
   const formData = new FormData();
   formData.append('user_id', userId);
   formData.append('file', file);
+  formData.append('mode', mode);
 
   const response = await api.post('predict', formData, {
     headers: {

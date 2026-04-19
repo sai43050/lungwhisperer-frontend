@@ -454,6 +454,7 @@ def mock_login(username: str, db: Session = Depends(database.get_db)):
 async def predict_scan(
     user_id: int = Form(...),
     file: UploadFile = File(...),
+    mode: str = Form("heuristic"),  # Default to heuristic for production stability
     db: Session = Depends(database.get_db)
 ):
     user = db.query(db_models.User).filter(db_models.User.id == user_id).first()
@@ -463,32 +464,33 @@ async def predict_scan(
     file_path = os.path.join(UPLOAD_DIR, file.filename)
     image_bytes = await file.read()
     
+    # Heuristic validation (always run)
     try:
         from PIL import Image
         import numpy as np
         import io
         img = Image.open(io.BytesIO(image_bytes)).convert('RGB')
         arr = np.array(img)
-        # Check 1: Reject obviously colorful (non-grayscale) images
         diff_rg = np.mean(np.abs(arr[:,:,0].astype(int) - arr[:,:,1].astype(int)))
         diff_rb = np.mean(np.abs(arr[:,:,0].astype(int) - arr[:,:,2].astype(int)))
         if diff_rg > 30.0 or diff_rb > 30.0:
             raise HTTPException(status_code=400, detail="Image appears to be a color photograph. Please upload a grayscale Chest X-ray.")
-
-        # Check 2: Reject blank/flat images with no content
-        std_dev = np.std(arr)
-        if std_dev < 5.0:
-            raise HTTPException(status_code=400, detail="Image lacks sufficient structural contrast to be a valid X-ray.")
-
+        if np.std(arr) < 5.0:
+            raise HTTPException(status_code=400, detail="Image lacks sufficient structural contrast.")
     except HTTPException:
         raise
     except Exception as e:
-        print("Heuristic validation error:", e)
+        print("Heuristic pre-validation error:", e)
         
     with open(file_path, "wb") as buffer:
         buffer.write(image_bytes)
+    
     try:
-        result = predict_real_image(image_bytes, file.filename)
+        if mode == "neural" and image_ensemble:
+            result = predict_real_image(image_bytes, file.filename)
+        else:
+            # Explicitly use high-speed heuristic
+            result = predict_heuristic(image_bytes)
         
         scan_record = db_models.ScanRecord(
             user_id=user.id,
@@ -512,15 +514,22 @@ async def predict_scan(
             "modality": "image",
             "gradcam": result.get("gradcam", ""),
             "findings": result.get("findings", []),
-            "suggestions": result.get("suggestions", [])
+            "suggestions": result.get("suggestions", []),
+            "engine": "neural" if (mode == "neural" and image_ensemble) else "heuristic"
         }
     except Exception as e:
-        print(f"CRITICAL: Diagnostic Engine Failure: {e}")
+        print(f"CRITICAL: Diagnostic Engine Failure. Rescuing with Heuristic: {e}")
         db.rollback()
-        raise HTTPException(
-            status_code=500, 
-            detail="The AI Diagnostic Engine encountered a temporary processing error. Please try again in 30 seconds."
-        )
+        # Panic Fallback to Heuristic regardless of requested mode
+        result = predict_heuristic(image_bytes)
+        return {
+            "prediction": result['prediction'],
+            "confidence": result['confidence'],
+            "findings": result['findings'],
+            "suggestions": result['suggestions'],
+            "gradcam": "",
+            "engine": "heuristic_fallback"
+        }
 
 @app.post("/api/predict/audio")
 async def predict_audio(
