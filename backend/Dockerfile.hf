@@ -1,0 +1,50 @@
+# Hugging Face Spaces Optimized Dockerfile
+FROM python:3.10-slim
+
+# System dependencies for OpenCV, PyTorch, and Postgres
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    libgl1 \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up non-root user (Hugging Face Requirement)
+RUN useradd -m -u 1000 user
+USER user
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH \
+    TRANSFORMERS_CACHE=/tmp/huggingface/hub \
+    HF_HOME=/tmp/huggingface \
+    TORCH_HOME=/tmp/torch \
+    MPLCONFIGDIR=/tmp/matplotlib
+
+WORKDIR $HOME/app
+
+# Install CPU-only PyTorch first (Hugging Face Free tier is CPU)
+RUN pip install --no-cache-dir \
+    torch==2.2.2+cpu torchvision==0.17.2+cpu torchaudio==2.2.2+cpu \
+    --extra-index-url https://download.pytorch.org/whl/cpu
+
+# Hard-pin numpy for stability
+RUN pip install --no-cache-dir "numpy==1.26.4"
+
+# Install remaining dependencies
+COPY --chown=user requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
+
+# Copy application code
+COPY --chown=user . .
+
+# Ensure upload directory is writable (in /tmp for HF)
+RUN mkdir -p /tmp/uploads
+ENV UPLOAD_DIR=/tmp/uploads
+
+# Hugging Face listens on 7860
+EXPOSE 7860
+
+# Add a healthcheck to prevent boot timeouts
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:7860/api/health || exit 1
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]

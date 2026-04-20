@@ -5,8 +5,16 @@ import os
 
 # Default to SQLite, override with Postgres via ENV var
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./lung_disease.db")
+
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# Neon/Serverless Postgres requires SSL
+if "postgresql" in SQLALCHEMY_DATABASE_URL and "sslmode" not in SQLALCHEMY_DATABASE_URL:
+    if "?" in SQLALCHEMY_DATABASE_URL:
+        SQLALCHEMY_DATABASE_URL += "&sslmode=require"
+    else:
+        SQLALCHEMY_DATABASE_URL += "?sslmode=require"
 
 # PostgreSQL doesn't need check_same_thread, so conditionally assign it
 connect_args = {"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}

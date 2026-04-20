@@ -4,6 +4,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 from fastapi import FastAPI, Depends, UploadFile, File, Form, HTTPException, status
+from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 import json
@@ -50,6 +51,11 @@ db_models.Base.metadata.create_all(bind=database.engine)
 app = FastAPI(title="Lung Whisperer API")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
+@app.get("/")
+def read_root():
+    # Redirect root to docs for easy API testing in Hugging Face Spaces
+    return RedirectResponse(url="/docs")
+
 @app.get("/api/health")
 def health_check():
     return {
@@ -88,7 +94,8 @@ app.add_middleware(
 # Mount Socket.io handler
 app.mount("/ws", socket_app)
 
-UPLOAD_DIR = "uploads"
+# Use Environment variable for UPLOAD_DIR (crucial for Hugging Face /tmp)
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # ----- Image Deep Learning Setup -----
