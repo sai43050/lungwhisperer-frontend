@@ -60,7 +60,9 @@ async def lifespan(app: FastAPI):
         print(f"LIFESPAN: Models loaded. Image: {len(image_ensemble)}, Audio: {len(audio_ensemble)}")
         app.state.models_ready = True
     except Exception as e:
+        import traceback
         print(f"LIFESPAN CRITICAL ERROR: Failed to pre-warm engine: {e}")
+        traceback.print_exc()
         app.state.models_ready = False
     
     yield
@@ -298,7 +300,7 @@ def predict_real_image(image_bytes: bytes, filename: str = "") -> dict:
     }
 
 # ----- Audio Deep Learning Setup -----
-AUDIO_MODEL1_PATH = "audio_model_weights_resnet18.pth"
+AUDIO_MODEL1_PATH = "audio_model_weights.pth"
 AUDIO_MODEL2_PATH = "audio_model_weights_mobilenet.pth"
 AUDIO_CLASSES_PATH = "audio_classes.txt"
 
