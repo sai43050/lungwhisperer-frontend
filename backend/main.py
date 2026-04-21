@@ -118,16 +118,25 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise credentials_exception
     return user
 
+# CORS Configuration
+origins = ["*"] # Allow all for rapid rescue, refined later
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_origin_regex="https://.*\.vercel\.app"
 )
 
 # Mount Socket.io handler
 app.mount("/ws", socket_app)
+
+@app.post("/api/predict/fast")
+async def predict_fast(file: UploadFile = File(...)):
+    contents = await file.read()
+    return predict_heuristic(contents)
 
 # Use Environment variable for UPLOAD_DIR (crucial for Hugging Face /tmp)
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
@@ -655,6 +664,48 @@ async def predict_scan(
         except Exception as rescue_err:
             print(f"DOUBLE FAULT: Panic Rescue also failed: {rescue_err}")
             raise HTTPException(status_code=500, detail="Diagnostic system is temporarily unavailable. Please try again in a moment.")
+
+@app.post("/api/predict/fast")
+async def predict_scan_fast(
+    user_id: int = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(database.get_db)
+):
+    """Ultra-fast Gemini-only path for when local compute is lagging."""
+    user = db.query(db_models.User).filter(db_models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User session expired.")
+
+    image_bytes = await file.read()
+    result = await analyze_with_gemini(image_bytes)
+    
+    if not result:
+        # Final safety heuristic
+        result = predict_heuristic(image_bytes)
+    
+    # Simple persistence without GradCAM for speed
+    scan_record = db_models.ScanRecord(
+        user_id=user.id,
+        image_path="fast_scan_" + file.filename,
+        prediction=f"{result.get('prediction', 'Inconclusive')}",
+        confidence=result.get('confidence', 0.5),
+        findings=json.dumps(result.get('findings', [])),
+        suggestions=json.dumps(result.get('suggestions', []))
+    )
+    db.add(scan_record)
+    db.commit()
+    db.refresh(scan_record)
+
+    return {
+        "id": scan_record.id,
+        "prediction": scan_record.prediction,
+        "confidence": scan_record.confidence,
+        "timestamp": scan_record.timestamp,
+        "modality": "image",
+        "findings": result.get("findings", []),
+        "suggestions": result.get("suggestions", []),
+        "engine": "gemini_fast_track"
+    }
 
 @app.post("/api/predict/audio")
 async def predict_audio(
