@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UploadCloud, CheckCircle, AlertCircle, Loader2, Image as ImageIcon, Zap, ShieldCheck, Mic } from 'lucide-react';
-import { predictScan } from '../api';
+import { predictScan, predictScanFast } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../components/Toast';
 
@@ -84,10 +84,10 @@ export default function UploadScan({ user }) {
             setStatusStep(3); // "Fast Track" status
             try {
               const fastResult = await predictScanFast(user.user_id, file);
-              if (loading) { // Check if still loading original
-                 setResults(fastResult);
-                 setLoading(false);
+              if (isUploading) { // Check if still waiting for original
+                 setIsUploading(false);
                  controller.abort(); // Cancel slow primary
+                 navigate('/results', { state: { results: fastResult } });
               }
             } catch (err) {
               console.error("Fast track attempt failed", err);
